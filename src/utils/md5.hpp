@@ -1,5 +1,5 @@
-#ifndef MD5_HPP
-#define MD5_HPP
+#ifndef HASHGRAPH_UTILS_MD5_HPP
+#define HASHGRAPH_UTILS_MD5_HPP
 
 #include <math.h>
 #include <stdbool.h>
@@ -8,6 +8,9 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+
+namespace hashgraph {
+namespace utils {
 
 typedef struct			s_v
 {
@@ -27,4 +30,6 @@ unsigned int			g_cks;
 unsigned long long		g_len;
 unsigned char			*g_new;
 
+};
+};
 #endif

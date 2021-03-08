@@ -7,6 +7,7 @@ TARGET      := main
 # The Directories, Source, Includes, Objects, Binary and Resources
 SRCDIR      := src
 INCDIR      := inc
+LIBDIR      := lib
 BUILDDIR    := obj
 TARGETDIR   := bin
 SRCEXT      := cpp
@@ -14,10 +15,16 @@ DEPEXT      := d
 OBJEXT      := o
 
 # Flags, Libraries and Includes
-CFLAGS      := -g -Wall
-LIB         := 
+CFLAGS      :=  -g -Wall -DWRITE_LOG # -DDEBUG -DMAKE_FORKS
+LIB         := -L$(LIBDIR) -lpthread -lthrift
 INC         := -I$(INCDIR)
 INCDEP      := -I$(INCDIR)
+
+#---------------------------------------------------------------------------------
+# Arguments
+#---------------------------------------------------------------------------------
+
+ARGS := -n 0:1:localhost:8080 -n 1:1:localhost:8081 -n 2:1:localhost:8082 -i 100000
 
 #---------------------------------------------------------------------------------
 # DO NOT EDIT BELOW THIS LINE
@@ -65,6 +72,7 @@ $(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 # Non-File Targets
 .PHONY: all remake clean cleaner
 
-# Run the compiled program
-run: main
-	./$(TARGETDIR)/$(TARGET)
+# for running the compiled program
+run : $(TARGET)
+	./$(TARGETDIR)/$(TARGET) $(ARGS)
+

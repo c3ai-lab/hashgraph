@@ -1,5 +1,8 @@
 #include "md5.hpp"
 
+namespace hashgraph {
+namespace utils {
+
 unsigned int g_a;
 unsigned int g_b;
 unsigned int g_c;
@@ -154,3 +157,6 @@ const std::string	md5_hash(std::string const str)
 		free(g_new);
 	return (s.str());
 }
+
+};
+};
