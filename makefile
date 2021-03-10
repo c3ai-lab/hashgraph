@@ -15,7 +15,7 @@ DEPEXT      := d
 OBJEXT      := o
 
 # Flags, Libraries and Includes
-CFLAGS      :=  -g -Wall -DWRITE_LOG # -DDEBUG -DMAKE_FORKS
+CFLAGS      :=  -g -Wall -DWRITE_LOG -std=c++11 # -DDEBUG -DMAKE_FORKS
 LIB         := -L$(LIBDIR) -lpthread -lthrift
 INC         := -I$(INCDIR)
 INCDEP      := -I$(INCDIR)
