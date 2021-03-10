@@ -85,7 +85,7 @@ Person::Person(int const &ind, std::map<int, HashgraphNode> *nodes) : PersonNetw
 	// open file descriptor for logging
 	if (WRITE_LOG) {
 		std::ostringstream filename;
-		filename << "Log" << ind << ".txt" << std::endl;
+		filename << "Log" << ind << ".log";
 		ofs.open(filename.str(), std::ofstream::out | std::ofstream::trunc);
 	}
 
