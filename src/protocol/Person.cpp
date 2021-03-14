@@ -80,18 +80,18 @@ bool compareEventsLesser(const Event* lhs, const Event* rhs) {
 
 int64_t Person::dataSequenceNumber = 0;
 
-Person::Person(int const &ind, std::map<int, HashgraphNode> *nodes) : PersonNetworker(nodes), currentRound(0),  index(ind) {
+Person::Person(message::Endpoint const &ep, std::vector<message::Endpoint> *endpoints) : PersonNetworker(ep, endpoints), currentRound(0) {
 
 	// open file descriptor for logging
 	if (WRITE_LOG) {
 		std::ostringstream filename;
-		filename << "Log" << ind << ".log";
+		filename << "Log" << ep.index << ".log";
 		ofs.open(filename.str(), std::ofstream::out | std::ofstream::trunc);
 	}
 
 	// initial event data
 	message::Data d;
-	d.owner 	 = index;
+	d.owner 	 = ep.index;
 	d.target 	 = -1;
 	d.payload 	 = 0;
 	d.timestamp  = 0;
@@ -102,11 +102,11 @@ Person::Person(int const &ind, std::map<int, HashgraphNode> *nodes) : PersonNetw
 	hashgraph.insert(hashgraph.begin(), new Event(*this, d));
 
 	// initial worth for every person
-	for (std::size_t i = 0; i < this->nodes->size(); i++)
+	for (std::size_t i = 0; i < endpoints->size(); i++)
 		networth.push_back(100000);
 
 	// start server
-    startServer(ind);
+    startServer();
 }
 
 Person::~Person() {
@@ -118,7 +118,7 @@ Person&	Person::operator=(Person const &){
 }
 
 bool Person::operator==(Person const &rhs) {
-	return this->index == rhs.index;
+	return this->ep.index == rhs.ep.index;
 }
 
 std::vector<Event*>	Person::findWitnesses(int const &round) const {
@@ -174,13 +174,13 @@ int	Person::finalizeOrder(std::size_t n, int const &r, std::vector<Event*> const
 	std::vector<Event*> ufw;
 	Event *tmp;
 
-	ufw = findUFW(w, this->nodes->size());
+	ufw = findUFW(w, this->endpoints->size());
 	
 	std::size_t j;
-	for (j = 0; j < this->nodes->size() && (!ufw[j] || ufw[j]->ancestor(*(hashgraph[n]))); j++)
+	for (j = 0; j < this->endpoints->size() && (!ufw[j] || ufw[j]->ancestor(*(hashgraph[n]))); j++)
 		;
-	if (j == this->nodes->size()) {
-		for (j = 0; j < this->nodes->size(); j++) {
+	if (j == this->endpoints->size()) {
+		for (j = 0; j < this->endpoints->size(); j++) {
 			if (ufw[j]) {
 				tmp = ufw[j];
 				while (tmp->getSelfParent() && tmp->getSelfParent()->ancestor(*(hashgraph[n])))
@@ -224,15 +224,15 @@ void Person::findOrder() {
 	}
 }
 
-void Person::gossip(int32_t target) {
+void Person::gossip(message::Endpoint const &target) {
 	
 	// sort the hashgraph
 	this->mutex.lock();
 	std::sort(hashgraph.begin(), hashgraph.end(), compareEventsGreater);
-	Event* check = getTopNode(target);
+	Event* check = getTopNode(target.index);
 	this->mutex.unlock();
 
-	std::vector<bool> b(this->nodes->size());
+	std::vector<bool> b(this->endpoints->size());
 	std::fill(b.begin(), b.end(), false);
 
 	// find an events in the hashgraph the target has not seen yet
@@ -245,7 +245,7 @@ void Person::gossip(int32_t target) {
 		}
 	}
 
-	this->sendGossip(this->index, target, arr);
+	this->sendGossip(this->ep, target, arr);
 }
 
 Event *Person::getTopNode(int32_t index) const {
@@ -267,12 +267,12 @@ Event *Person::getForkNode(Person const &target) const {
 	int64_t t2  = -1;
 
 	for (std::size_t i = 0; i < hashgraph.size(); i++) {
-		if (hashgraph[i]->getData().owner == target.index && hashgraph[i]->getData().timestamp > t) {
+		if (hashgraph[i]->getData().owner == target.ep.index && hashgraph[i]->getData().timestamp > t) {
 			t = hashgraph[i]->getData().timestamp;
 		}
 	}
 	for (std::size_t i = 0; i < hashgraph.size(); i++) {
-		if (hashgraph[i]->getData().owner == target.index && hashgraph[i]->getData().timestamp > t2 && hashgraph[i]->getData().timestamp != t) {
+		if (hashgraph[i]->getData().owner == target.ep.index && hashgraph[i]->getData().timestamp > t2 && hashgraph[i]->getData().timestamp != t) {
 			t2 = hashgraph[i]->getData().timestamp;
 			fork = hashgraph[i];
 		}
@@ -290,15 +290,15 @@ void Person::createEvent(int32_t gossiper) {
 	d.seqNum     =  Person::dataSequenceNumber++;
 	d.payload    =  0;
 	d.target     = -1;
-	d.owner      = index;
+	d.owner      = this->ep.index;
 	d.timestamp  = timestamp;
-	d.selfHash   = (this->getTopNode(this->index) ? this->getTopNode(this->index)->getHash() : "\0");
+	d.selfHash   = (this->getTopNode(this->ep.index) ? this->getTopNode(this->ep.index)->getHash() : "\0");
 	d.gossipHash = (this->getTopNode(gossiper) ? this->getTopNode(gossiper)->getHash() : "\0");
 	
 	// gossip a payload every 10th message (approx.)
 	if (!(std::rand() % 10)) {
 		d.payload = std::rand() % 1000;
-		d.target  = std::rand() % this->nodes->size();
+		d.target  = std::rand() % this->endpoints->size();
 	}
 	
 	// only for testing, force a fork every 100th message (approx.)

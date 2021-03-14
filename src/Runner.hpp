@@ -6,7 +6,7 @@
 #include <string>
 
 #include "protocol/Person.hpp"
-#include "protocol/HashgraphNode.hpp"
+#include "message/Gossip.h"
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -22,9 +22,9 @@ class Runner {
     private:
 
         /**
-         * List of hashgraph nodes in the network
+         * Application settings
          */
-        std::map<int, protocol::HashgraphNode> nodes;
+        message::AppSettings settings;
 
         /**
          * List of locally running nodes
@@ -43,9 +43,9 @@ class Runner {
         ~Runner();
 
         /**
-         * Add a node to the list
+         * Initializes the hashgraph runner
          */
-        void addHashgraphNode(int index, int isLocal, std::string address, int port);
+        void initHashgraphRunner(std::string configFile);
 
         /**
          * Start the hashgraph protocol

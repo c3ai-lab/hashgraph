@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.13)
 include(ExternalProject)
 
 # set the project name
-project(hashgraph)
+project(hashgraph CXX)
 
 # compiler settings
 set(CMAKE_CXX_STANDARD 11)
@@ -43,6 +43,29 @@ add_custom_command(
     COMMAND ${PROJECT_SOURCE_DIR}/external/bin/thrift -r -gen cpp -out ${PROJECT_SOURCE_DIR}/src/message hashgraph.thrift
 )
 
+# test target
+add_custom_target(openssl_samples
+  SOURCES 
+    tests/keys/client.cert
+    tests/keys/client.csr
+    tests/keys/client.key
+    tests/keys/server.cert
+    tests/keys/server.key
+)
+
+# generated keys and certificates for testing
+add_custom_command(
+  OUTPUT 
+    ${PROJECT_SOURCE_DIR}/tests/keys/client.cert
+    ${PROJECT_SOURCE_DIR}/tests/keys/client.csr
+    ${PROJECT_SOURCE_DIR}/tests/keys/client.key
+    ${PROJECT_SOURCE_DIR}/tests/keys/server.cert
+    ${PROJECT_SOURCE_DIR}/tests/keys/server.key
+
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests
+  COMMAND ${PROJECT_SOURCE_DIR}/tests/scripts/openssl.sh
+)
+
 # set hashgraph executable
 add_executable(hashgraph 
   src/main.cpp
@@ -55,9 +78,10 @@ add_executable(hashgraph
   src/utils/md5.cpp
 )
 
-# make thrift project required to build hashgraph
+# hashgraph dependencies
 add_dependencies(hashgraph 
   thrift_project
+  openssl_samples
 )
 
 # external includes
@@ -72,5 +96,5 @@ target_link_directories(hashgraph
 
 # link libraries
 target_link_libraries(hashgraph 
-  PUBLIC pthread thriftd
+  PUBLIC thriftd pthread ssl crypto
 )

@@ -4,7 +4,12 @@
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TBufferTransports.h>
 
+#include <thrift/transport/TSSLSocket.h>
+#include <thrift/transport/TSSLServerSocket.h>
+
 #include "PersonNetworker.hpp"
+
+#include <iostream>
 
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
@@ -14,7 +19,7 @@ namespace hashgraph {
 namespace protocol {
 
 
-PersonNetworker::PersonNetworker(std::map<int, HashgraphNode> *nodes) : nodes(nodes) {
+PersonNetworker::PersonNetworker(message::Endpoint const &ep, std::vector<message::Endpoint> *endpoints) : ep(ep), endpoints(endpoints) {
     this->force_close = false;
 }
 
@@ -31,15 +36,22 @@ PersonNetworker::~PersonNetworker() {
     }
 }
 
-void *PersonNetworker::serverStarter(PersonNetworker* ctx, int port) {
+void *PersonNetworker::serverStarter(PersonNetworker* ctx) {
     if (ctx->force_close) return NULL;
 
     // https://stackoverflow.com/questions/28523035/best-way-to-create-a-fake-smart-pointer-when-you-need-one-but-only-have-a-refere
     std::shared_ptr<PersonNetworker> handler(std::shared_ptr<PersonNetworker>(std::shared_ptr<PersonNetworker>(), ctx));
     std::shared_ptr<TProcessor> processor(new message::GossipProcessor(handler));
-    std::shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
     std::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
     std::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+
+    // ssl transport
+    std::shared_ptr<TSSLSocketFactory> sslSocketFactory(new TSSLSocketFactory(SSLProtocol::TLSv1_2));
+    sslSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+    sslSocketFactory->loadCertificate(ctx->ep.srvCertPath.c_str());
+    sslSocketFactory->loadPrivateKey(ctx->ep.srvKeyPath.c_str());
+    sslSocketFactory->server(true);
+    std::shared_ptr<TServerTransport> serverTransport(new TSSLServerSocket(ctx->ep.port, sslSocketFactory));
 
     // start server
     ctx->server = std::make_shared<TSimpleServer>(processor, serverTransport, transportFactory, protocolFactory);
@@ -50,25 +62,33 @@ void *PersonNetworker::serverStarter(PersonNetworker* ctx, int port) {
     return NULL;
 }
 
-void PersonNetworker::startServer(int32_t index) {
+void PersonNetworker::startServer() {
     this->thread = std::make_shared<std::thread>(
-        std::bind(&PersonNetworker::serverStarter, this, this->nodes->at(index).port)
+        std::bind(&PersonNetworker::serverStarter, this)
     );
 }
 
-bool PersonNetworker::sendGossip(int32_t gossiper, int32_t target, std::vector<message::Data> const &gossip) {
+bool PersonNetworker::sendGossip(message::Endpoint const &gossiper, message::Endpoint const &target, std::vector<message::Data> const &gossip) {
 
-	auto socket    = std::make_shared<TSocket>(this->nodes->at(target).address, this->nodes->at(target).port);
-	auto transport = std::make_shared<TBufferedTransport>(socket);
-	auto protocol  = std::make_shared<TBinaryProtocol>(transport);
- 
+    // ssl transport
+    std::shared_ptr<TSSLSocketFactory> sslSocketFactory(new TSSLSocketFactory(SSLProtocol::TLSv1_2));
+    sslSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+    sslSocketFactory->loadTrustedCertificates(gossiper.clnCAPath.c_str());
+    sslSocketFactory->loadCertificate(gossiper.clnCertPath.c_str());
+    sslSocketFactory->loadPrivateKey(gossiper.clnKeyPath.c_str());
+    sslSocketFactory->authenticate(true);
+
+	std::shared_ptr<TSSLSocket> socket            = sslSocketFactory->createSocket(target.address, target.port);
+	std::shared_ptr<TBufferedTransport> transport = std::make_shared<TBufferedTransport>(socket);
+	std::shared_ptr<TBinaryProtocol> protocol     = std::make_shared<TBinaryProtocol>(transport);
+
 	message::GossipClient client(protocol);
- 
+
 	try {
         // connect to remote server
 		transport->open();
         // exchange gossip data
-		client.recieveGossip(gossiper, gossip);
+		client.recieveGossip(gossiper.index, gossip);
         // close connection
 		transport->close();
 	}

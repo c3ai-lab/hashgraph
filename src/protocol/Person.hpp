@@ -80,11 +80,6 @@ class Person : public PersonNetworker {
 	public:
 	
 		/**
-		 * Index of this node
-		 */
-		int index;
-
-		/**
 		 * Contains the worth for every node
 		 */
 		std::vector<int64_t> networth;
@@ -92,10 +87,10 @@ class Person : public PersonNetworker {
 		/**
 		 * Constructor
 		 * 
-		 * @param ind Index of the person
-		 * @param nodes List of all network nodes
+		 * @param ep Endpoint of this node
+		 * @param endpoints Vector of hashgraph endpoints
 		 */
-		Person(int const &ind, std::map<int, HashgraphNode> *nodes);
+		Person(message::Endpoint const &ep, std::vector<message::Endpoint> *endpoints);
 
 		/**
 		 * Destructor
@@ -166,9 +161,9 @@ class Person : public PersonNetworker {
 		/**
 		 * Collect new events from the hashgraph and gossip them to another person
 		 *
-		 * @param target Index from the target person
+		 * @param target Target endpoint to gossip
 		 */
-		void gossip(int32_t target);
+		void gossip(message::Endpoint const &target);
 
 		/**
 		 * Handle incoming gossip data

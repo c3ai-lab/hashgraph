@@ -1,6 +1,24 @@
 
 namespace cpp hashgraph.message
 
+// endpoint data
+struct Endpoint {
+  1: i32    index;
+	2: string address;
+  3: i32    port;
+  4: i32    isLocal;
+	5: string srvCertPath;
+  6: string srvKeyPath;
+  7: string clnCertPath;
+  8: string clnKeyPath;
+  9: string clnCAPath;
+}
+
+// application settings
+struct AppSettings {
+  1:list<Endpoint> endpoints
+}
+
 // gossip data
 struct Data {
   1: i64    seqNum;
@@ -12,9 +30,8 @@ struct Data {
 	7: i32    owner;
 }
 
-// Service definition
+// service definition
 service Gossip {
-
     // exchange gossip data
     void recieveGossip(1:i32 gossiper, 2:list<Data> gossip),
 }

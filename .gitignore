@@ -1,5 +1,6 @@
 *.log
-.vscode/*
-bin/*
-external/*
-src/message/*
+.vscode
+bin
+external
+src/message
+tests/keys

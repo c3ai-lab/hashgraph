@@ -1,19 +1,16 @@
 #ifndef HASHGRAPH_NETWORKER_HPP
 #define HASHGRAPH_NETWORKER_HPP
 
-
 #include <string>
 #include <map>
+#include <algorithm>
 #include <memory>
 #include <thread>
 #include <mutex>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/server/TThreadedServer.h>
 
-
-
 #include "../message/Gossip.h"
-#include "HashgraphNode.hpp"
 
 using namespace apache::thrift::server;
 
@@ -45,17 +42,21 @@ class PersonNetworker : virtual public message::GossipIf {
         /**
          * Server starter function
          * 
-         * @param ctx
-         * @param port
+         * @param ctx This context
          */
-        static void *serverStarter(PersonNetworker *ctx, int port);   
+        static void *serverStarter(PersonNetworker *ctx);   
 
     public:
 
         /**
-         * List of network nodes
+		 * Endpoint of this node
+		 */
+		message::Endpoint ep;
+
+        /**
+         * Vector of hashgraph endpoints
          */
-        std::map<int, HashgraphNode> *nodes;
+        std::vector<message::Endpoint> *endpoints;
 
         /**
          * Mutex for shared resources
@@ -65,9 +66,9 @@ class PersonNetworker : virtual public message::GossipIf {
         /**
          * Constructor
          * 
-         * @param nodes
+         * @param endpoints Vector of hashgraph endpoints
          */
-        PersonNetworker(std::map<int, HashgraphNode> *nodes);
+        PersonNetworker(message::Endpoint const &ep, std::vector<message::Endpoint> *endpoints);
 
         /**
          * Destructor
@@ -76,10 +77,8 @@ class PersonNetworker : virtual public message::GossipIf {
 
         /**
          * Start the server for incoming messages
-         * 
-         * @param index
          */
-        void startServer(int32_t index);
+        void startServer();
 
         /**
          * Gossip a message
@@ -88,7 +87,7 @@ class PersonNetworker : virtual public message::GossipIf {
          * @param target
          * @param gossip
          */
-        bool sendGossip(int32_t gossiper, int32_t target, std::vector<message::Data> const &gossip);
+        bool sendGossip(message::Endpoint const &gossiper, message::Endpoint const &target, std::vector<message::Data> const &gossip);
 
         /**
          * Called on incoming data

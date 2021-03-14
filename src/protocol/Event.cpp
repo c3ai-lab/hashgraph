@@ -45,12 +45,12 @@ void Event::divideRounds(Person &person) {
 
 	std::vector<Event*> witnesses = person.findWitnesses(this->round);
 	for (std::size_t i = 0; i < witnesses.size(); i++) {
-		if (numStrongSee > 2 * person.nodes->size() / 3)
+		if (numStrongSee > 2 * person.endpoints->size() / 3)
 			break;
-		if (this->stronglySee(*witnesses[i], person.nodes->size()))
+		if (this->stronglySee(*witnesses[i], person.endpoints->size()))
 			numStrongSee++;
 	}
-	if (numStrongSee > 2 * person.nodes->size() / 3) {
+	if (numStrongSee > 2 * person.endpoints->size() / 3) {
 		this->round = this->round + 1;
 		if (person.getCurRound() < this->round)
 			person.incCurRound();
@@ -76,7 +76,7 @@ void Event::decideFame(Person &person) {
 			count = 0;
 			countNo = 0;
 			for (std::size_t y = 0; y < s.size(); y++) {
-				if (!this->stronglySee(*(s[y]), person.nodes->size())) {
+				if (!this->stronglySee(*(s[y]), person.endpoints->size())) {
 					s.erase(s.begin() + y);
 				}
 				else {
@@ -87,9 +87,9 @@ void Event::decideFame(Person &person) {
 				}
 			}
 			d = this->round - this->graph[x]->getRound();
-			if (count > 2 * person.nodes->size() / 3)
+			if (count > 2 * person.endpoints->size() / 3)
 				this->graph[x]->setFamous(1);
-			else if (countNo > 2 * person.nodes->size() / 3)
+			else if (countNo > 2 * person.endpoints->size() / 3)
 				this->graph[x]->setFamous(0);
 			else if (!(d % 2)) // TODO: check C=2
 				this->graph[x]->setFamous(this->graph[x]->getHash()[16] % 2);

@@ -3,6 +3,11 @@
 #include <signal.h>
 #include <unistd.h>
 #include <cstring>
+#include <fstream>
+#include <streambuf>
+
+#include <thrift/protocol/TJSONProtocol.h>
+#include <thrift/transport/TBufferTransports.h>
 
 #include "Runner.hpp"
 #include "utils/hashgraph_utils.hpp"
@@ -39,25 +44,31 @@ namespace hashgraph {
         }
     }
 
-    void Runner::addHashgraphNode(int index, int isLocal, std::string address, int port) {
-        protocol::HashgraphNode node;
-        node.index         = index;
-        node.isLocal       = isLocal;
-        node.address       = address;
-        node.port          = port;
-        this->nodes[index] = node;
+    void Runner::initHashgraphRunner(std::string configFile) {
+        std::ifstream t(configFile.c_str());
+        if (!t.good())
+            throw std::invalid_argument("No config file found");
+
+        
+        // read config file into string
+        std::string configStr((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+
+        // read json protocol
+        std::shared_ptr<apache::thrift::transport::TMemoryBuffer> transport(new apache::thrift::transport::TMemoryBuffer((uint8_t*)configStr.c_str(), configStr.size()));
+        std::shared_ptr<apache::thrift::protocol::TJSONProtocol> protocol(new apache::thrift::protocol::TJSONProtocol(transport));
+        this->settings.read((protocol.get()));
     }
 
     void Runner::startHashgraph(int interval) {
-        if (this->nodes.size() == 0)
+        if (this->settings.endpoints.size() == 0)
             throw std::invalid_argument("No nodes given");
 
-        std::map<int, protocol::HashgraphNode>::iterator it;
-        for (it = this->nodes.begin(); it != this->nodes.end(); it++) {
+        std::vector<message::Endpoint>::iterator it;
+        for (it = this->settings.endpoints.begin(); it != this->settings.endpoints.end(); it++) {
             // check whether the node should be run locally
-            if (it->second.isLocal) {
+            if (it->isLocal) {
                 this->persons.push_back(
-                    new protocol::Person(it->first, &(this->nodes))
+                    new protocol::Person(*it, &(this->settings.endpoints))
                 );
             }
         }
@@ -71,11 +82,11 @@ namespace hashgraph {
             protocol::Person *p = this->persons.at(std::rand() % this->persons.size());
 
             // select a random target index from the list of known nodes
-            int j;
-            while ((j = this->nodes.at(std::rand() % this->nodes.size()).index) == p->index);
+            message::Endpoint tar;
+            while ((tar = this->settings.endpoints.at(std::rand() % this->settings.endpoints.size())).index == p->ep.index);
 
             // gossip to target index
-            p->gossip(j);
+            p->gossip(tar);
             
             // limit gossip interval
             usleep(interval);
@@ -84,7 +95,7 @@ namespace hashgraph {
             if (!DEBUG) {
                 if (printerval > 1000000) {
                     printerval = 0;
-                    std::cout << "\rNetworth (view of " << p->index <<"): ";
+                    std::cout << "\rNetworth (view of " << p->ep.index <<"): ";
                     for (std::size_t i = 0; i < p->networth.size(); i++) {
                         std::cout << p->networth.at(i) << " ";
                     }
