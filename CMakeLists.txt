@@ -29,6 +29,7 @@ ExternalProject_Add(thrift_project
   CMAKE_ARGS -DWITH_JAVASCRIPT:BOOL=OFF
   CMAKE_ARGS -DWITH_PYTHON:BOOL=OFF
   CMAKE_ARGS -DWITH_HASKELL:BOOL=OFF
+  CMAKE_ARGS -DWITH_JAVA:BOOL=OFF
 )
 
 # generate thrift interfaces and messages
