@@ -6,10 +6,7 @@
 namespace hashgraph {
 namespace utils {
 
-
-const std::string md5_hash(std::string const str);
-void			  md5Init();
-
+const std::string sha384_string(std::string const str);
 
 };
 };

@@ -17,8 +17,6 @@ namespace hashgraph {
     std::atomic<bool> quit;
 
     Runner::Runner() {
-        // initialize md5 utility
-        utils::md5Init();
         // set thrift global output
         apache::thrift::GlobalOutput.setOutputFunction([](const char* msg) {
             if (DEBUG) {

@@ -27,7 +27,7 @@ std::string Event::makeHash() {
 	std::ostringstream s;
 
 	s << *this;
-	return utils::md5_hash(s.str());
+	return utils::sha384_string(s.str());
 }
 
 void Event::divideRounds(Person &person) {
