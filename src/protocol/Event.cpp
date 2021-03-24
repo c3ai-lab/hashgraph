@@ -19,9 +19,17 @@ Event::Event(Person &p, message::Data const &data) :
 	famous(-1) {
 	
 	hash = makeHash();
+
+	// sign this event
+	std::ostringstream s;
+	s << *this;
+	utils::ecdsa_sign(p.ep->privKey, s.str(), &(this->sigR), &(this->sigS));
 }
 
-Event::~Event(){}
+Event::~Event() {
+	free(this->sigR);
+	free(this->sigS);
+}
 
 std::string Event::makeHash() {
 	std::ostringstream s;

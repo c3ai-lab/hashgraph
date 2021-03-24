@@ -35,11 +35,14 @@ namespace hashgraph {
     }
 
     Runner::~Runner() {
-        // free persons memory
-        std::vector<protocol::Person*>::iterator it;
-        for (it = this->persons.begin(); it != this->persons.end(); it++) {
-            delete (*it);
-        }
+
+        std::vector<protocol::Person*>::iterator pit;
+        for (pit = this->persons.begin(); pit != this->persons.end(); pit++)
+            delete (*pit);
+
+        std::vector<types::Endpoint*>::iterator eit;
+        for (eit = this->endpoints.begin(); eit != this->endpoints.end(); eit++)
+            delete (*eit);
     }
 
     void Runner::initHashgraphRunner(std::string configFile) {
@@ -54,36 +57,46 @@ namespace hashgraph {
         // read json protocol
         std::shared_ptr<apache::thrift::transport::TMemoryBuffer> transport(new apache::thrift::transport::TMemoryBuffer((uint8_t*)configStr.c_str(), configStr.size()));
         std::shared_ptr<apache::thrift::protocol::TJSONProtocol> protocol(new apache::thrift::protocol::TJSONProtocol(transport));
-        this->settings.read((protocol.get()));
+
+        message::AppSettings settings;
+        settings.read((protocol.get()));
+
+        std::vector<message::Endpoint>::iterator it;
+        for (it = settings.endpoints.begin(); it != settings.endpoints.end(); it++) {
+            this->endpoints.push_back(
+                new types::Endpoint(*it)
+            );
+        }
     }
 
     void Runner::startHashgraph(int interval) {
-        if (this->settings.endpoints.size() == 0)
+        if (this->endpoints.size() == 0)
             throw std::invalid_argument("No nodes given");
 
-        std::vector<message::Endpoint>::iterator it;
-        for (it = this->settings.endpoints.begin(); it != this->settings.endpoints.end(); it++) {
+        std::vector<types::Endpoint*>::iterator it;
+        for (it = this->endpoints.begin(); it != this->endpoints.end(); it++) {
             // check whether the node should be run locally
-            if (it->isLocal) {
+            if ((*it)->isLocal) {
                 this->persons.push_back(
-                    new protocol::Person(*it, &(this->settings.endpoints))
+                    new protocol::Person((*it), &(this->endpoints))
                 );
             }
         }
 
         // limits networth prints
         int printerval = 0;
+        // target endpoint
+        types::Endpoint *tar;
 
         while (true) {
 
             // select a random person from the local persons list
             protocol::Person *p = this->persons.at(std::rand() % this->persons.size());
 
-            // select a random target index from the list of known nodes
-            message::Endpoint tar;
-            while ((tar = this->settings.endpoints.at(std::rand() % this->settings.endpoints.size())).index == p->ep.index);
+            // select a random target from the list of known nodes
+            while ((tar = this->endpoints.at(std::rand() % this->endpoints.size()))->index == p->ep->index);
 
-            // gossip to target index
+            // gossip to target
             p->gossip(tar);
             
             // limit gossip interval
@@ -93,7 +106,7 @@ namespace hashgraph {
             if (!DEBUG) {
                 if (printerval > 1000000) {
                     printerval = 0;
-                    std::cout << "\rNetworth (view of " << p->ep.index <<"): ";
+                    std::cout << "\rNetworth (view of " << p->ep->index <<"): ";
                     for (std::size_t i = 0; i < p->networth.size(); i++) {
                         std::cout << p->networth.at(i) << " ";
                     }

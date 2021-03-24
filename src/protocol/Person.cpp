@@ -80,18 +80,18 @@ bool compareEventsLesser(const Event* lhs, const Event* rhs) {
 
 int64_t Person::dataSequenceNumber = 0;
 
-Person::Person(message::Endpoint const &ep, std::vector<message::Endpoint> *endpoints) : PersonNetworker(ep, endpoints), currentRound(0) {
+Person::Person(types::Endpoint *ep, std::vector<types::Endpoint*> *endpoints) : PersonNetworker(ep, endpoints), currentRound(0) {
 
 	// open file descriptor for logging
 	if (WRITE_LOG) {
 		std::ostringstream filename;
-		filename << "Log" << ep.index << ".log";
+		filename << "Log" << ep->index << ".log";
 		ofs.open(filename.str(), std::ofstream::out | std::ofstream::trunc);
 	}
 
 	// initial event data
 	message::Data d;
-	d.owner 	 = ep.index;
+	d.owner 	 = ep->index;
 	d.target 	 = -1;
 	d.payload 	 = 0;
 	d.timestamp  = 0;
@@ -118,7 +118,7 @@ Person&	Person::operator=(Person const &){
 }
 
 bool Person::operator==(Person const &rhs) {
-	return this->ep.index == rhs.ep.index;
+	return this->ep->index == rhs.ep->index;
 }
 
 std::vector<Event*>	Person::findWitnesses(int const &round) const {
@@ -158,6 +158,8 @@ void Person::outputOrder(std::size_t n) {
 	ofs << "Consensus Time: " << this->hashgraph[n]->getConsensusTimestamp() << std::endl;
 	ofs << "Self Parent: " 	  << this->hashgraph[n]->getData().selfHash      << std::endl;
 	ofs << "Gossip Parent: "  << this->hashgraph[n]->getData().gossipHash    << std::endl;
+	ofs << "Signature: "      << this->hashgraph[n]->sigR 					 << "|" 
+							  << this->hashgraph[n]->sigS 					 << std::endl;
 
 	if (this->hashgraph[n]->getData().payload) {
 		ofs << "Payload: " << this->hashgraph[n]->getData().payload << " to " << this->hashgraph[n]->getData().target << std::endl;
@@ -224,12 +226,12 @@ void Person::findOrder() {
 	}
 }
 
-void Person::gossip(message::Endpoint const &target) {
+void Person::gossip(types::Endpoint *target) {
 	
 	// sort the hashgraph
 	this->mutex.lock();
 	std::sort(hashgraph.begin(), hashgraph.end(), compareEventsGreater);
-	Event* check = getTopNode(target.index);
+	Event* check = getTopNode(target->index);
 	this->mutex.unlock();
 
 	std::vector<bool> b(this->endpoints->size());
@@ -267,12 +269,12 @@ Event *Person::getForkNode(Person const &target) const {
 	int64_t t2  = -1;
 
 	for (std::size_t i = 0; i < hashgraph.size(); i++) {
-		if (hashgraph[i]->getData().owner == target.ep.index && hashgraph[i]->getData().timestamp > t) {
+		if (hashgraph[i]->getData().owner == target.ep->index && hashgraph[i]->getData().timestamp > t) {
 			t = hashgraph[i]->getData().timestamp;
 		}
 	}
 	for (std::size_t i = 0; i < hashgraph.size(); i++) {
-		if (hashgraph[i]->getData().owner == target.ep.index && hashgraph[i]->getData().timestamp > t2 && hashgraph[i]->getData().timestamp != t) {
+		if (hashgraph[i]->getData().owner == target.ep->index && hashgraph[i]->getData().timestamp > t2 && hashgraph[i]->getData().timestamp != t) {
 			t2 = hashgraph[i]->getData().timestamp;
 			fork = hashgraph[i];
 		}
@@ -290,9 +292,9 @@ void Person::createEvent(int32_t gossiper) {
 	d.seqNum     =  Person::dataSequenceNumber++;
 	d.payload    =  0;
 	d.target     = -1;
-	d.owner      = this->ep.index;
+	d.owner      = this->ep->index;
 	d.timestamp  = timestamp;
-	d.selfHash   = (this->getTopNode(this->ep.index) ? this->getTopNode(this->ep.index)->getHash() : "\0");
+	d.selfHash   = (this->getTopNode(this->ep->index) ? this->getTopNode(this->ep->index)->getHash() : "\0");
 	d.gossipHash = (this->getTopNode(gossiper) ? this->getTopNode(gossiper)->getHash() : "\0");
 	
 	// gossip a payload every 10th message (approx.)

@@ -10,6 +10,7 @@
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/server/TThreadedServer.h>
 
+#include "../types/Endpoint.hpp"
 #include "../message/Gossip.h"
 
 using namespace apache::thrift::server;
@@ -51,12 +52,12 @@ class PersonNetworker : virtual public message::GossipIf {
         /**
 		 * Endpoint of this node
 		 */
-		message::Endpoint ep;
+		types::Endpoint *ep;
 
         /**
          * Vector of hashgraph endpoints
          */
-        std::vector<message::Endpoint> *endpoints;
+        std::vector<types::Endpoint*> *endpoints;
 
         /**
          * Mutex for shared resources
@@ -66,9 +67,10 @@ class PersonNetworker : virtual public message::GossipIf {
         /**
          * Constructor
          * 
+         * @param ep
          * @param endpoints Vector of hashgraph endpoints
          */
-        PersonNetworker(message::Endpoint const &ep, std::vector<message::Endpoint> *endpoints);
+        PersonNetworker(types::Endpoint *ep, std::vector<types::Endpoint*> *endpoints);
 
         /**
          * Destructor
@@ -87,7 +89,7 @@ class PersonNetworker : virtual public message::GossipIf {
          * @param target
          * @param gossip
          */
-        bool sendGossip(message::Endpoint const &gossiper, message::Endpoint const &target, std::vector<message::Data> const &gossip);
+        bool sendGossip(types::Endpoint *gossiper, types::Endpoint *target, std::vector<message::Data> const &gossip);
 
         /**
          * Called on incoming data

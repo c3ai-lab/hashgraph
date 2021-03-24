@@ -19,7 +19,7 @@ namespace hashgraph {
 namespace protocol {
 
 
-PersonNetworker::PersonNetworker(message::Endpoint const &ep, std::vector<message::Endpoint> *endpoints) : ep(ep), endpoints(endpoints) {
+PersonNetworker::PersonNetworker(types::Endpoint *ep, std::vector<types::Endpoint*> *endpoints) : ep(ep), endpoints(endpoints) {
     this->force_close = false;
 }
 
@@ -48,10 +48,10 @@ void *PersonNetworker::serverStarter(PersonNetworker* ctx) {
     // ssl transport
     std::shared_ptr<TSSLSocketFactory> sslSocketFactory(new TSSLSocketFactory(SSLProtocol::TLSv1_2));
     sslSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-    sslSocketFactory->loadCertificate(ctx->ep.srvCertPath.c_str());
-    sslSocketFactory->loadPrivateKey(ctx->ep.srvKeyPath.c_str());
-    sslSocketFactory->server(true);
-    std::shared_ptr<TServerTransport> serverTransport(new TSSLServerSocket(ctx->ep.port, sslSocketFactory));
+    sslSocketFactory->loadCertificateFromBuffer(ctx->ep->certificatePEM.c_str());
+    sslSocketFactory->loadPrivateKeyFromBuffer(ctx->ep->privKeyPEM.c_str());
+    sslSocketFactory->authenticate(false);
+    std::shared_ptr<TServerTransport> serverTransport(new TSSLServerSocket(ctx->ep->port, sslSocketFactory));
 
     // start server
     ctx->server = std::make_shared<TSimpleServer>(processor, serverTransport, transportFactory, protocolFactory);
@@ -68,17 +68,14 @@ void PersonNetworker::startServer() {
     );
 }
 
-bool PersonNetworker::sendGossip(message::Endpoint const &gossiper, message::Endpoint const &target, std::vector<message::Data> const &gossip) {
+bool PersonNetworker::sendGossip(types::Endpoint *gossiper, types::Endpoint *target, std::vector<message::Data> const &gossip) {
 
     // ssl transport
     std::shared_ptr<TSSLSocketFactory> sslSocketFactory(new TSSLSocketFactory(SSLProtocol::TLSv1_2));
     sslSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-    sslSocketFactory->loadTrustedCertificates(gossiper.clnCAPath.c_str());
-    sslSocketFactory->loadCertificate(gossiper.clnCertPath.c_str());
-    sslSocketFactory->loadPrivateKey(gossiper.clnKeyPath.c_str());
-    sslSocketFactory->authenticate(true);
+    sslSocketFactory->loadTrustedCertificatesFromBuffer(target->certificatePEM.c_str());
 
-	std::shared_ptr<TSSLSocket> socket            = sslSocketFactory->createSocket(target.address, target.port);
+	std::shared_ptr<TSSLSocket> socket            = sslSocketFactory->createSocket(target->address, target->port);
 	std::shared_ptr<TBufferedTransport> transport = std::make_shared<TBufferedTransport>(socket);
 	std::shared_ptr<TBinaryProtocol> protocol     = std::make_shared<TBinaryProtocol>(transport);
 
@@ -88,7 +85,7 @@ bool PersonNetworker::sendGossip(message::Endpoint const &gossiper, message::End
         // connect to remote server
 		transport->open();
         // exchange gossip data
-		client.recieveGossip(gossiper.index, gossip);
+		client.recieveGossip(gossiper->index, gossip);
         // close connection
 		transport->close();
 	}

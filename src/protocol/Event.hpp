@@ -41,6 +41,9 @@ class Event{
 		std::string makeHash();
 		
 	public:
+		// signature
+		char *sigR;
+		char *sigS;
 
 		/**
 		 * Constructor

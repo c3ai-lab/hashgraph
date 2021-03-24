@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# https://github.com/apache/thrift/blob/077b5fce825e79d84592fff893639b92b637eec7/test/keys/README.md
+
 # prepare folder
 if [ -d "keys" ]; then
     rm -R keys
@@ -25,12 +27,8 @@ openssl req -new -key client.key -subj "/C=US/ST=Maryland/L=Forest Hill/O=The Ap
 # sign the client certificate with the server.key
 openssl x509 -sha384 -req -days 3000 -in client.csr -CA ca.pem -CAkey server.key -set_serial 01 -out client.cert
 
-
-# https://github.com/apache/thrift/blob/077b5fce825e79d84592fff893639b92b637eec7/test/keys/README.md
-
 # pub key from priv
-# openssl ec -in server_priv.key -pubout -out pub.key
+# openssl ec -in server.key -pubout -out server_pub.key
 
 # print certificate
 # openssl x509 -in server.cert -text -noout
-

@@ -7,11 +7,8 @@ struct Endpoint {
 	2: string address;
   3: i32    port;
   4: i32    isLocal;
-	5: string srvCertPath;
-  6: string srvKeyPath;
-  7: string clnCertPath;
-  8: string clnKeyPath;
-  9: string clnCAPath;
+	5: string certPath;
+  6: string keyPath;
 }
 
 // application settings

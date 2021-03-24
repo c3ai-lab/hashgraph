@@ -76,7 +76,9 @@ add_executable(hashgraph
   src/protocol/Event.cpp
   src/protocol/Person.cpp
   src/protocol/PersonNetworker.cpp
+  src/types/Endpoint.cpp
   src/utils/sha384.cpp
+  src/utils/ecdsa.cpp
 )
 
 # hashgraph dependencies

@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 
+#include "types/Endpoint.hpp"
 #include "protocol/Person.hpp"
 #include "message/Gossip.h"
 
@@ -22,9 +23,9 @@ class Runner {
     private:
 
         /**
-         * Application settings
+         * Remote endpoints
          */
-        message::AppSettings settings;
+        std::vector<types::Endpoint*> endpoints;
 
         /**
          * List of locally running nodes

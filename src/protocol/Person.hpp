@@ -13,6 +13,7 @@
 
 #include "Event.hpp"
 #include "PersonNetworker.hpp"
+#include "../types/Endpoint.hpp"
 #include "../message/Gossip.h"
 
 
@@ -90,7 +91,7 @@ class Person : public PersonNetworker {
 		 * @param ep Endpoint of this node
 		 * @param endpoints Vector of hashgraph endpoints
 		 */
-		Person(message::Endpoint const &ep, std::vector<message::Endpoint> *endpoints);
+		Person(types::Endpoint *ep, std::vector<types::Endpoint*> *endpoints);
 
 		/**
 		 * Destructor
@@ -163,7 +164,7 @@ class Person : public PersonNetworker {
 		 *
 		 * @param target Target endpoint to gossip
 		 */
-		void gossip(message::Endpoint const &target);
+		void gossip(types::Endpoint *target);
 
 		/**
 		 * Handle incoming gossip data
