@@ -99,6 +99,10 @@ void PersonNetworker::recieveGossip(const int32_t gossiper, const std::vector<me
     // dummy
 }
 
+void PersonNetworker::transfer(const int32_t payload, const int32_t target) {
+    // dummy
+}
+
 
 };
 };

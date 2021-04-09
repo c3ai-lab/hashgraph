@@ -92,12 +92,20 @@ class PersonNetworker : virtual public message::GossipIf {
         bool sendGossip(types::Endpoint *gossiper, types::Endpoint *target, std::vector<message::Data> const &gossip);
 
         /**
-         * Called on incoming data
-         * 
-         * @param gossiper
-         * @param gossip
+		 * Handle incoming gossip data
+		 *
+		 * @param gossiper Creator index of the gossip data
+		 * @param gossip Gossip data vector
          */
         virtual void recieveGossip(const int32_t gossiper, const std::vector<message::Data> &gossip);
+
+        /**
+         * Called on incoming transfer request
+         * 
+         * @param payload
+         * @param target
+         */
+        virtual void transfer(const int32_t payload, const int32_t target);
 };
 
 

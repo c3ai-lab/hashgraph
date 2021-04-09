@@ -10,10 +10,12 @@
 #include <vector>
 #include <unistd.h>
 #include <ctime>
+#include <queue>
 
 #include "Event.hpp"
 #include "PersonNetworker.hpp"
 #include "../types/Endpoint.hpp"
+#include "../types/Transfer.hpp"
 #include "../message/Gossip.h"
 
 
@@ -37,10 +39,11 @@ class Event;
 class Person : public PersonNetworker {
 	
 	private:
+
 		/**
-         * Counts the number of created events
+         * Buffer for transfers to process
          */
-		static int64_t dataSequenceNumber;
+		std::queue<types::Transfer> transferRequests;
 
 		/**
          * Hashgraph
@@ -79,7 +82,7 @@ class Person : public PersonNetworker {
 		Event *getForkNode(Person const &target) const;
 
 	public:
-	
+
 		/**
 		 * Contains the worth for every node
 		 */
@@ -173,6 +176,14 @@ class Person : public PersonNetworker {
 		 * @param gossip Gossip data vector
 		 */
 		void recieveGossip(const int32_t gossiper, const std::vector<message::Data> &gossip);
+
+		/**
+         * Called on incoming transfer request
+         * 
+         * @param payload
+         * @param target
+         */
+        void transfer(const int32_t payload, const int32_t target);
 
 		/**
 		 * Gets the current round

@@ -50,12 +50,8 @@ bool compareEventsGreater(const Event* lhs, const Event* rhs) {
 	if (lhs->getData().timestamp != rhs->getData().timestamp) 
 		return lhs->getData().timestamp > rhs->getData().timestamp;
 
-	// compare events by owner
-	if (lhs->getData().owner != rhs->getData().owner)
-		return lhs->getData().owner > rhs->getData().owner;
-
-	// compare events by sequence number
-	return lhs->getData().seqNum > rhs->getData().seqNum;
+	// compare events by their hash
+	return (lhs->getHash().compare(rhs->getHash()) > 0);
 }
 
 /**
@@ -70,15 +66,9 @@ bool compareEventsLesser(const Event* lhs, const Event* rhs) {
 	if (lhs->getData().timestamp != rhs->getData().timestamp) 
 		return lhs->getData().timestamp < rhs->getData().timestamp;
 
-	// compare events by owner
-	if (lhs->getData().owner != rhs->getData().owner)
-		return lhs->getData().owner < rhs->getData().owner;
-
-	// compare events by sequence number
-	return lhs->getData().seqNum < rhs->getData().seqNum;
+	// compare events by their hash
+	return (lhs->getHash().compare(rhs->getHash()) < 0);
 }
-
-int64_t Person::dataSequenceNumber = 0;
 
 Person::Person(types::Endpoint *ep, std::vector<types::Endpoint*> *endpoints) : PersonNetworker(ep, endpoints), currentRound(0) {
 
@@ -289,7 +279,6 @@ void Person::createEvent(int32_t gossiper) {
 		std::chrono::system_clock::now().time_since_epoch()).count();
 
 	message::Data d;
-	d.seqNum     =  Person::dataSequenceNumber++;
 	d.payload    =  0;
 	d.target     = -1;
 	d.owner      = this->ep->index;
@@ -297,11 +286,21 @@ void Person::createEvent(int32_t gossiper) {
 	d.selfHash   = (this->getTopNode(this->ep->index) ? this->getTopNode(this->ep->index)->getHash() : "\0");
 	d.gossipHash = (this->getTopNode(gossiper) ? this->getTopNode(gossiper)->getHash() : "\0");
 	
+	
+	// process first transfer request in queue
+	if (this->transferRequests.size() > 0) {
+		d.payload = this->transferRequests.front().payload;
+		d.target  = this->transferRequests.front().target;
+		this->transferRequests.pop();
+	}
+
+	/*
 	// gossip a payload every 10th message (approx.)
 	if (!(std::rand() % 10)) {
 		d.payload = std::rand() % 1000;
 		d.target  = std::rand() % this->endpoints->size();
 	}
+	*/
 	
 	// only for testing, force a fork every 100th message (approx.)
 	if (MAKE_FORKS && !(std::rand() % 100) && this->getForkNode(*this)) {
@@ -309,6 +308,13 @@ void Person::createEvent(int32_t gossiper) {
 	}	
 	
 	hashgraph.insert(hashgraph.begin(), new Event(*this, d));
+}
+
+void Person::transfer(const int32_t payload, const int32_t target) {
+	types::Transfer t;
+	t.payload = payload;
+	t.target  = target;
+	this->transferRequests.push(t);
 }
 
 void Person::recieveGossip(const int32_t gossiper, const std::vector<message::Data> &gossip) {
@@ -320,7 +326,7 @@ void Person::recieveGossip(const int32_t gossiper, const std::vector<message::Da
 
 	for (std::size_t i=0; i < gossip.size(); i++) {
 
-		// creatge event from gossip data
+		// create event from gossip data
 		tmp = new Event(*this, gossip[i]);
 
 		// check whether new event already exists in hashgraph
