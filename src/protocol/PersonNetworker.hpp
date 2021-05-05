@@ -18,6 +18,7 @@ using namespace apache::thrift::server;
 namespace hashgraph {
 namespace protocol {
 
+
 /**
  * PersonNetworker
  */
@@ -97,7 +98,7 @@ class PersonNetworker : virtual public message::GossipIf {
 		 * @param gossiper Creator index of the gossip data
 		 * @param gossip Gossip data vector
          */
-        virtual void recieveGossip(const int32_t gossiper, const std::vector<message::Data> &gossip);
+        virtual void recieveGossip(const int32_t gossiper, const std::vector<message::Data> &gossip) {};
 
         /**
          * Called on incoming transfer request
@@ -105,7 +106,7 @@ class PersonNetworker : virtual public message::GossipIf {
          * @param payload
          * @param target
          */
-        virtual void transfer(const int32_t payload, const int32_t target);
+        virtual void transfer(const int32_t payload, const int32_t target) {};
 };
 
 

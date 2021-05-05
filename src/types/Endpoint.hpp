@@ -3,7 +3,6 @@
 
 #include <string>
 #include <openssl/ec.h>
-#include "../message/Gossip.h"
 
 namespace hashgraph {
 namespace types {
@@ -58,7 +57,7 @@ class Endpoint {
         /**
          * Constructor
          */
-		Endpoint(message::Endpoint const &ep);
+		Endpoint(int index, std::string address, int port, int isLocal, std::string certPath, std::string keyPath);
 
         /**
          * Destructor

@@ -1,4 +1,4 @@
-#include <string>
+
 #include <fstream>
 #include <streambuf>
 
@@ -9,22 +9,21 @@ namespace hashgraph {
 namespace types {
 
 
-Endpoint::Endpoint(message::Endpoint const &ep) {
-
-	this->address = ep.address;
-	this->port    = ep.port;
-	this->index   = ep.index;
-	this->isLocal = ep.isLocal;
+Endpoint::Endpoint(int index, std::string address, int port, int isLocal, std::string certPath, std::string keyPath) :
+	index(index),
+	isLocal(isLocal),
+	port(port),
+	address(address) {
 
 	// read cert from disk
-	std::ifstream cert(ep.certPath);
+	std::ifstream cert(certPath);
 	this->certificatePEM.assign(std::istreambuf_iterator<char>(cert), std::istreambuf_iterator<char>());
 
 	// read priv key from disk
-	std::ifstream privKey(ep.keyPath);
+	std::ifstream privKey(keyPath);
 	this->privKeyPEM.assign(std::istreambuf_iterator<char>(privKey), std::istreambuf_iterator<char>());
 
-	// get openssl key objects
+	// openssl key objects
 	this->privKey = utils::getPrivFromPEM(this->privKeyPEM);
 	this->pubKey  = utils::getPubFromCertPEM(this->certificatePEM);
 }

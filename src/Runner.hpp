@@ -6,6 +6,7 @@
 #include <string>
 
 #include "types/Endpoint.hpp"
+#include "types/User.hpp"
 #include "protocol/Person.hpp"
 #include "message/Gossip.h"
 
@@ -26,6 +27,11 @@ class Runner {
          * Remote endpoints
          */
         std::vector<types::Endpoint*> endpoints;
+
+        /**
+         * Network user
+         */
+        std::vector<types::User*> users;
 
         /**
          * List of locally running nodes

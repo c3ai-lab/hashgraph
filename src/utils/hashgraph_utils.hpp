@@ -7,6 +7,7 @@
 namespace hashgraph {
 namespace utils {
 
+
 /**
  * Returns an sha384 hash
  *

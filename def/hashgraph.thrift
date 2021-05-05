@@ -1,21 +1,6 @@
 
 namespace cpp hashgraph.message
 
-// endpoint data
-struct Endpoint {
-  1: i32    index;
-	2: string address;
-  3: i32    port;
-  4: i32    isLocal;
-	5: string certPath;
-  6: string keyPath;
-}
-
-// application settings
-struct AppSettings {
-  1:list<Endpoint> endpoints
-}
-
 // gossip data
 struct Data {
   1: i32    payload;

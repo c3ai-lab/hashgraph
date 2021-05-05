@@ -3,11 +3,8 @@
 #include <signal.h>
 #include <unistd.h>
 #include <cstring>
-#include <fstream>
-#include <streambuf>
 
-#include <thrift/protocol/TJSONProtocol.h>
-#include <thrift/transport/TBufferTransports.h>
+#include "yaml-cpp/yaml.h"
 
 #include "Runner.hpp"
 #include "utils/hashgraph_utils.hpp"
@@ -46,32 +43,47 @@ namespace hashgraph {
     }
 
     void Runner::initHashgraphRunner(std::string configFile) {
-        std::ifstream t(configFile.c_str());
-        if (!t.good())
-            throw std::invalid_argument("No config file found");
 
-        
-        // read config file into string
-        std::string configStr((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+        // read config file
+        YAML::Node config = YAML::LoadFile(configFile);
 
-        // read json protocol
-        std::shared_ptr<apache::thrift::transport::TMemoryBuffer> transport(new apache::thrift::transport::TMemoryBuffer((uint8_t*)configStr.c_str(), configStr.size()));
-        std::shared_ptr<apache::thrift::protocol::TJSONProtocol> protocol(new apache::thrift::protocol::TJSONProtocol(transport));
+        if (!config["endpoints"]) 
+            throw std::invalid_argument("No endpoints given");
 
-        message::AppSettings settings;
-        settings.read((protocol.get()));
-
-        std::vector<message::Endpoint>::iterator it;
-        for (it = settings.endpoints.begin(); it != settings.endpoints.end(); it++) {
+        // parse hashgraph endpoints
+        for (const auto& n: config["endpoints"].as<std::vector<YAML::Node>>()) {
             this->endpoints.push_back(
-                new types::Endpoint(*it)
+                new types::Endpoint(
+                    n["index"].as<int>(),
+                    n["address"].as<std::string>(),
+                    n["port"].as<int>(),
+                    n["isLocal"].as<int>(),
+                    n["certPath"].as<std::string>(),
+                    n["keyPath"].as<std::string>()
+                )
             );
         }
+
+        /*
+        if (!config["users"]) 
+            throw std::invalid_argument("No users given");
+
+        // parse hashgraph user
+        for (const auto& n: config["users"].as<std::vector<YAML::Node>>()) {
+            this->users.push_back(
+                new types::User(
+                    n["index"].as<int>(),
+                    n["certPath"].as<std::string>()
+                )
+            );
+        }
+        */
+
     }
 
     void Runner::startHashgraph(int interval) {
         if (this->endpoints.size() == 0)
-            throw std::invalid_argument("No nodes given");
+            throw std::invalid_argument("No endpoints set");
 
         std::vector<types::Endpoint*>::iterator it;
         for (it = this->endpoints.begin(); it != this->endpoints.end(); it++) {

@@ -3,13 +3,10 @@
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TBufferTransports.h>
-
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/TSSLServerSocket.h>
 
 #include "PersonNetworker.hpp"
-
-#include <iostream>
 
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
@@ -93,14 +90,6 @@ bool PersonNetworker::sendGossip(types::Endpoint *gossiper, types::Endpoint *tar
         return false;
 	}
     return true;
-}
-
-void PersonNetworker::recieveGossip(const int32_t gossiper, const std::vector<message::Data> &gossip) {
-    // dummy
-}
-
-void PersonNetworker::transfer(const int32_t payload, const int32_t target) {
-    // dummy
 }
 
 
