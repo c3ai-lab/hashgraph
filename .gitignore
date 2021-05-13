@@ -1,6 +1,7 @@
 *.log
 .vscode
 bin
+build
 external
 src/message
-tests/keys
+tests/config
