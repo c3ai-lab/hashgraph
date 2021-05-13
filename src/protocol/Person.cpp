@@ -305,7 +305,7 @@ void Person::crypto_transfer(const std::string& ownerPkDer, const int32_t amount
 	}
 }
 
-int32_t Person::user_amount(const std::string& ownerId) {
+int32_t Person::balance(const std::string& ownerId) {
 	std::lock_guard<std::mutex> guard(this->mutex);
 	
 	return this->getAmountForUser(ownerId); 

@@ -112,11 +112,11 @@ class PersonNetworker : virtual public message::GossipIf {
         virtual void crypto_transfer(const std::string& ownerPkDer, const int32_t amount, const std::string& receiverId, const std::string& challenge, const std::string& sigDer) = 0;
 
         /**
-         * Request user amount
+         * Request user balance
          * 
          * @param ownerId
          */
-        virtual int32_t user_amount(const std::string& ownerId) = 0;
+        virtual int32_t balance(const std::string& ownerId) = 0;
 
 };
 

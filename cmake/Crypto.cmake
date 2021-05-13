@@ -1,5 +1,3 @@
-
-
 SET(CRYPTO_LIST)
 SET(NUM_NODES "2")
 

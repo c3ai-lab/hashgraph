@@ -188,11 +188,11 @@ class Person : public PersonNetworker, public PersonApplication {
 		void crypto_transfer(const std::string& ownerPkDer, const int32_t amount, const std::string& receiverId, const std::string& challenge, const std::string& sigDer);
 
         /**
-         * Request user amount
+         * Request user balance
          * 
          * @param ownerId
          */
-		int32_t user_amount(const std::string& ownerId);
+		int32_t balance(const std::string& ownerId);
 
 		/**
 		 * Gets the current round

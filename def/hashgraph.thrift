@@ -21,8 +21,8 @@ struct Data {
 service Gossip {
 	// exchange gossip data
 	void receiveGossip(1:string gossiper, 2:list<Data> gossip)
-	// initiate transfer (with crypto)
+	// initiate a balance transfer
 	void crypto_transfer(1:binary ownerPkDer, 2:i32 amount, 3:string receiverId, 4:binary challenge, 5:binary sigDer)
-	// initiate transfer (with crypto)
-	i32 user_amount(1:string ownerId)
+	// return the balance of the given owner
+	i32 balance(1:string ownerId)
 }
