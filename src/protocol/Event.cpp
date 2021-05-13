@@ -1,11 +1,10 @@
 
-
+#include <unordered_map>
 #include "Event.hpp"
 #include "../utils/hashgraph_utils.hpp"
 
 namespace hashgraph {
 namespace protocol {
-
 
 Event::Event(Person &p, message::Data const &data) : 
 	graph(const_cast<std::vector<Event *>&>(p.getHashgraph())),
@@ -19,23 +18,15 @@ Event::Event(Person &p, message::Data const &data) :
 	famous(-1) {
 	
 	hash = makeHash();
-
-	// sign this event
-	std::ostringstream s;
-	s << *this;
-	utils::ecdsa_sign(p.ep->privKey, s.str(), &(this->sigR), &(this->sigS));
 }
 
 Event::~Event() {
-	free(this->sigR);
-	free(this->sigS);
 }
 
 std::string Event::makeHash() {
 	std::ostringstream s;
-
 	s << *this;
-	return utils::sha384_string(s.str());
+	return utils::byteToHex(utils::SHA384(s.str()));
 }
 
 void Event::divideRounds(Person &person) {
@@ -55,7 +46,7 @@ void Event::divideRounds(Person &person) {
 	for (std::size_t i = 0; i < witnesses.size(); i++) {
 		if (numStrongSee > 2 * person.endpoints->size() / 3)
 			break;
-		if (this->stronglySee(*witnesses[i], person.endpoints->size()))
+		if (this->stronglySee(*witnesses[i], person.endpoints))
 			numStrongSee++;
 	}
 	if (numStrongSee > 2 * person.endpoints->size() / 3) {
@@ -84,7 +75,7 @@ void Event::decideFame(Person &person) {
 			count = 0;
 			countNo = 0;
 			for (std::size_t y = 0; y < s.size(); y++) {
-				if (!this->stronglySee(*(s[y]), person.endpoints->size())) {
+				if (!this->stronglySee(*(s[y]), person.endpoints)) {
 					s.erase(s.begin() + y);
 				}
 				else {
@@ -191,12 +182,14 @@ bool Event::ancestor(Event const &y) {
 	return b;
 }
 
-bool Event::stronglySee(Event const &y, std::size_t numNodes) {
+bool Event::stronglySee(Event const &y, std::vector<types::Endpoint*> *endpoints) {
 
 	std::size_t numSee = 0;
 
-	std::vector<bool> found(numNodes);
-	std::fill(found.begin(), found.end(), false);
+	std::unordered_map<std::string, bool> found;
+	for (std::vector<types::Endpoint*>::iterator it = endpoints->begin(); it != endpoints->end(); ++it) {
+		found[(*it)->identifier] = false;
+	}
 
 	for (std::size_t n = 0; n < graph.size(); n++) {
 		if (found[graph[n]->getData().owner] == true || graph[n]->getRound() < y.getRound())
@@ -204,7 +197,7 @@ bool Event::stronglySee(Event const &y, std::size_t numNodes) {
 		if (this->see(*(graph[n])) && graph[n]->see(y)) {
 			numSee++;
 			found[graph[n]->getData().owner] = true;
-			if (numSee > 2 * numNodes / 3) {
+			if (numSee > 2 * endpoints->size() / 3) {
 				return true;
 			}
 		}
@@ -298,7 +291,6 @@ std::ostream& operator<<(std::ostream& os, const Event& e) {
 	<< e.getData().timestamp << e.getData().owner;
 	return os;
 }
-
 
 };
 };

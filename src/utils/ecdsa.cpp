@@ -9,11 +9,12 @@
 #include <openssl/x509.h>
 #include <openssl/ecdsa.h>
 
+#include "hashgraph_utils.hpp"
+
 namespace hashgraph {
 namespace utils {
 
-
-EC_KEY* getPrivFromPEM(std::string const pem) {
+EC_KEY* getKeyFromPrivatePEM(const std::string pem) {
     EC_KEY *key = NULL;
 
     BIO *bio = BIO_new_mem_buf((void*)pem.c_str(), pem.size());
@@ -22,14 +23,13 @@ EC_KEY* getPrivFromPEM(std::string const pem) {
         return NULL;
     }
     key = PEM_read_bio_ECPrivateKey(bio, &key, NULL, NULL);
-
     BIO_free(bio);
 
     return key;
 }
 
-EC_KEY* getPubFromCertPEM(std::string const pem) {
-    
+EC_KEY* getKeyFromCertPEM(const std::string pem) {
+
     BIO *bio = BIO_new_mem_buf((void*)pem.c_str(), pem.size());
     if (!bio) {
         std::cerr << "Error: BIO_new_mem_buf failed" << std::endl;
@@ -49,49 +49,76 @@ EC_KEY* getPubFromCertPEM(std::string const pem) {
     return key;
 }
 
-void ecdsa_sign(EC_KEY *key, std::string const msg, char **r, char **s) {
-
-    if (NULL == key) {
-        printf("Failed to generate EC Key\n");
+std::string encodeKeyToPublicDER(EC_KEY *key) {
+    unsigned char *der = NULL;
+    int pub_key_len = i2d_EC_PUBKEY(key, &der);
+    if (pub_key_len <= 0) {
+        printf("Unexpected pub key length for generated key");
+        return NULL;
     }
-
-    ECDSA_SIG *signature = ECDSA_do_sign((const unsigned char*)msg.c_str(), msg.size(), key);
-    if (NULL == signature) {
-        printf("Failed to generate EC Signature\n");
-    }
-
-    (*r) = BN_bn2hex(ECDSA_SIG_get0_r(signature));
-    (*s) = BN_bn2hex(ECDSA_SIG_get0_s(signature));
-
-    ECDSA_SIG_free(signature);
+    std::string buffer((const char*)der, pub_key_len);
+    OPENSSL_free(der);
+    return buffer;
 }
 
-void ecdsa_verify(EC_KEY *key, std::string const msg, char *r, char *s) {
+std::string getIdentifierFromPrivatePEM(const std::string pem) {
 
-    if (NULL == key) {
-        printf("Failed to generate EC Key\n");
-    }
+    // get key object from pem
+    EC_KEY *key = getKeyFromPrivatePEM(pem);
 
-    BIGNUM *bnR = BN_new();
-    BN_hex2bn(&bnR, r);
+    // get DER encoding of public key
+    std::string der = encodeKeyToPublicDER(key);
 
-    BIGNUM *bnS = BN_new();
-    BN_hex2bn(&bnS, s);
+    // cleanup
+    EC_KEY_free(key);
 
-    ECDSA_SIG *signature = ECDSA_SIG_new();
-    ECDSA_SIG_set0(signature, bnR, bnS);
-
-    int status = ECDSA_do_verify((const unsigned char*)msg.c_str(), msg.size(), signature, key);
-    if (status != 1)
-        printf("Failed to verify EC Signature\n");
-    else
-        printf("Verifed EC Signature\n");
-
-    BN_free(bnR);
-    BN_free(bnS);
-    ECDSA_SIG_free(signature);
+	// calculate identifier
+	return utils::encodeIdentifier(der);
 }
 
+std::string getIdentifierFromCertPEM(const std::string pem) {
+
+    // get key object from pem
+    EC_KEY *key = getKeyFromCertPEM(pem);
+
+    // get DER encoding of public key
+    std::string der = encodeKeyToPublicDER(key);
+
+    // cleanup
+    EC_KEY_free(key);
+
+	// calculate identifier
+	return utils::encodeIdentifier(der);
+}
+
+EC_KEY* getKeyFromPublicDER(const std::string pubKeyDer) {
+	EC_KEY *pk = NULL;
+	BIO *bio = BIO_new_mem_buf((void*)pubKeyDer.c_str(), pubKeyDer.size());
+	if (!bio) {
+	   std::cerr << "Error: BIO_new_mem_buf failed" << std::endl;
+	   return NULL;
+	}
+	d2i_EC_PUBKEY_bio(bio, &pk);
+    BIO_free(bio);
+    return pk;
+}
+
+bool verifyECDSASignature(const std::string pubKeyDER, const std::string sigDER, const std::string msg) {
+
+	// public key from der encoded byte array
+	EC_KEY* pubKey = getKeyFromPublicDER(pubKeyDER);
+ 
+	// hash transfer message
+	std::string digest = utils::SHA256(msg);
+	
+	// verify signature
+   	bool valid = ECDSA_verify(0, (const unsigned char*)digest.c_str(), digest.size(), (const unsigned char*)sigDER.c_str(), sigDER.size(), pubKey) == 1;
+
+    // cleanup
+    EC_KEY_free(pubKey);
+
+	return valid;
+}
 
 };
 };

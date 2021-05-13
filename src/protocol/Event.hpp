@@ -1,16 +1,16 @@
 #ifndef HASHGRAPH_PROTOCOL_EVENT_HPP
 #define HASHGRAPH_PROTOCOL_EVENT_HPP
 
-#include "../message/Gossip.h"
-
 #include "Person.hpp"
 #include <unordered_set>
-#include <algorithm>    // std::find
+#include <algorithm>
 #include <array>
+
+#include "../message/Gossip.h"
+#include "../types/Endpoint.hpp"
 
 namespace hashgraph {
 namespace protocol {
-
 
 class Person;
 
@@ -41,9 +41,6 @@ class Event{
 		std::string makeHash();
 		
 	public:
-		// signature
-		char *sigR;
-		char *sigS;
 
 		/**
 		 * Constructor
@@ -206,9 +203,9 @@ class Event{
 		 * Checks whether the given event was seen by events from a super majority of other nodes
 		 * 
 		 * @param y Event to check against
-		 * @param numNodes Number of persons in the network
+		 * @param endpoints List of endpoints
 		 */
-		bool stronglySee(Event const &y, std::size_t numNodes);
+		bool stronglySee(Event const &y, std::vector<types::Endpoint*> *endpoints);
 };
 
 /**
@@ -218,7 +215,6 @@ class Event{
  * @param e
  */
 std::ostream& operator<<(std::ostream& os, const Event& e);
-
 
 };
 };

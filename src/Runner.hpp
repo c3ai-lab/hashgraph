@@ -4,9 +4,10 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <signal.h>
+#include <stdlib.h>
 
 #include "types/Endpoint.hpp"
-#include "types/User.hpp"
 #include "protocol/Person.hpp"
 #include "message/Gossip.h"
 
@@ -28,16 +29,6 @@ class Runner {
          */
         std::vector<types::Endpoint*> endpoints;
 
-        /**
-         * Network user
-         */
-        std::vector<types::User*> users;
-
-        /**
-         * List of locally running nodes
-         */
-        std::vector<protocol::Person*> persons;
-
     public:
         /**
          * Constructor
@@ -50,14 +41,9 @@ class Runner {
         ~Runner();
 
         /**
-         * Initializes the hashgraph runner
+         * Start the protocol execution
          */
-        void initHashgraphRunner(std::string configFile);
-
-        /**
-         * Start the hashgraph protocol
-         */
-        void startHashgraph(int interval);
+        void runHashgraphProtocol(const std::string configPath);
 };
 
 };

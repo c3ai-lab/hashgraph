@@ -7,9 +7,9 @@
 #include <memory>
 #include <thread>
 #include <mutex>
+#include <cstdint>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/server/TThreadedServer.h>
-
 #include "../types/Endpoint.hpp"
 #include "../message/Gossip.h"
 
@@ -17,7 +17,6 @@ using namespace apache::thrift::server;
 
 namespace hashgraph {
 namespace protocol {
-
 
 /**
  * PersonNetworker
@@ -46,19 +45,24 @@ class PersonNetworker : virtual public message::GossipIf {
          * 
          * @param ctx This context
          */
-        static void *serverStarter(PersonNetworker *ctx);   
+        static void *serverStarter(PersonNetworker *ctx, int port);   
 
     public:
 
         /**
-		 * Endpoint of this node
-		 */
-		types::Endpoint *ep;
+         * Public identifier
+         */
+        std::string identifier;
 
         /**
-         * Vector of hashgraph endpoints
+         * Private key in PEM format
          */
-        std::vector<types::Endpoint*> *endpoints;
+        std::string privKeyPEM;
+
+        /**
+         * Certificate in PEM format
+         */
+		std::string certifficatePEM;
 
         /**
          * Mutex for shared resources
@@ -67,11 +71,8 @@ class PersonNetworker : virtual public message::GossipIf {
 
         /**
          * Constructor
-         * 
-         * @param ep
-         * @param endpoints Vector of hashgraph endpoints
          */
-        PersonNetworker(types::Endpoint *ep, std::vector<types::Endpoint*> *endpoints);
+        PersonNetworker(const std::string privKeyPat, const std::string certPath);
 
         /**
          * Destructor
@@ -81,34 +82,43 @@ class PersonNetworker : virtual public message::GossipIf {
         /**
          * Start the server for incoming messages
          */
-        void startServer();
-
+        void startServer(int port);
+  
         /**
          * Gossip a message
          * 
-         * @param gossiper
          * @param target
-         * @param gossip
+         * @param gossipData
          */
-        bool sendGossip(types::Endpoint *gossiper, types::Endpoint *target, std::vector<message::Data> const &gossip);
+        bool sendGossip(types::Endpoint *target, const std::vector<message::Data> &gossipData);
 
         /**
-		 * Handle incoming gossip data
+		 * Receives a gossip from another node
 		 *
-		 * @param gossiper Creator index of the gossip data
+		 * @param gossiper Creator identifier of the gossip data
 		 * @param gossip Gossip data vector
          */
-        virtual void recieveGossip(const int32_t gossiper, const std::vector<message::Data> &gossip) {};
+        virtual void receiveGossip(const std::string& gossiper, const std::vector<message::Data> &gossip) = 0;
 
         /**
-         * Called on incoming transfer request
+         * Transfer request from a user
          * 
-         * @param payload
-         * @param target
+         * @param ownerPkDer
+		 * @param amount
+         * @param receiverId
+         * @param challenge
+         * @param sigDer
          */
-        virtual void transfer(const int32_t payload, const int32_t target) {};
-};
+        virtual void crypto_transfer(const std::string& ownerPkDer, const int32_t amount, const std::string& receiverId, const std::string& challenge, const std::string& sigDer) = 0;
 
+        /**
+         * Request user amount
+         * 
+         * @param ownerId
+         */
+        virtual int32_t user_amount(const std::string& ownerId) = 0;
+
+};
 
 };
 };

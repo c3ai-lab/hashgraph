@@ -7,48 +7,91 @@
 namespace hashgraph {
 namespace utils {
 
+/**
+ * Return a SHA384 byte string of the given input
+ *
+ * @param data The string to hash
+ */
+const std::string SHA384(const std::string data);
 
 /**
- * Returns an sha384 hash
+ * Return a SHA256 byte string of the given input
  *
- * @param str The string to hash
+ * @param data The string to hash
  */
-const std::string sha384_string(std::string const str);
+const std::string SHA256(const std::string data);
+
+/**
+ * Return a SHA3 (256 bit) byte string of the given input
+ *
+ * @param data The string to hash
+ */
+const std::string SHA3(const std::string data);
+
+/**
+ * Encodes the public identifier from a DER encoded public key
+ *
+ * @param data The string to hash
+ */
+const std::string encodeIdentifier(const std::string pubKeyDER);
+
+/**
+ * Decodes a hex string to a byte string
+ *
+ * @param hex Hex string to be decoded
+ */
+const std::string hexToByte(const std::string hex);
+
+/**
+ * Encodes a raw byte string to its hex representation
+ *
+ * @param bytes Byte string to be encoded
+ */
+const std::string byteToHex(const std::string bytes);
+
+/**
+ * Verifies a ECDSA signature
+ *
+ * @param pubKeyDER A byte string of the DER encoded public key
+ * @param sigDER A byte string of the DER encoded signature
+ * @param msg The message to verify
+ */
+bool verifyECDSASignature(const std::string pubKeyDER, const std::string sigDER, const std::string msg);
 
 /**
  * Get an EC private key object from the given PEM
  *
  * @param pem
  */
-EC_KEY* getPrivFromPEM(std::string const pem);
+EC_KEY* getKeyFromPrivatePEM(const std::string pem);
 
 /**
  * Get an EC public key object from the given certificate PEM
  *
  * @param pem
  */
-EC_KEY* getPubFromCertPEM(std::string const pem);
+EC_KEY* getKeyFromCertPEM(const std::string pem);
 
 /**
- * Creates a ECDSA signature from a message
+ * DER encodes the public key part of the given key struct
  *
  * @param key
- * @param msg
- * @param r
- * @param s
  */
-void ecdsa_sign(EC_KEY *key, std::string const msg, char **r, char **s);
+std::string encodeKeyToPublicDER(EC_KEY *key);
 
 /**
- * Verifies a ECDSA signature of a message
+ * Builds the public identifier from a private key pem
  *
- * @param key
- * @param msg
- * @param r
- * @param s
+ * @param pem
  */
-void ecdsa_verify(EC_KEY *key, std::string const msg, char *r, char *s);
+std::string getIdentifierFromPrivatePEM(const std::string pem);
 
+/**
+ * Builds the public identifier from a certificate pem
+ *
+ * @param pem
+ */
+std::string getIdentifierFromCertPEM(const std::string pem);
 
 };
 };

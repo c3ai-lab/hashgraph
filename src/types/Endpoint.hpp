@@ -2,7 +2,6 @@
 #define HASHGRAPH_TYPES_ENDPOINT_HPP
 
 #include <string>
-#include <openssl/ec.h>
 
 namespace hashgraph {
 namespace types {
@@ -14,50 +13,30 @@ class Endpoint {
 
 	public:
 
-		/**
-         * Unique index of the node
-         */
-		int index;
-
-		/**
-         * Flag that incidates a local node
-         */
-		int isLocal;
-
-		/**
-         * Port
+        /**
+         * Remote port
          */
 		int port;
 
-		/**
-         * IP address
+        /**
+         * Unique identifier of the node
          */
-		std::string address;
+		std::string identifier;
+
+		/**
+         * Remote host
+         */
+		std::string host;
 		
 		/**
          * Certificate in PEM format
          */
 		std::string certificatePEM;
 
-		/**
-         * Private key in PEM format
-         */
-		std::string privKeyPEM;
-
-        /**
-         * Public key object
-         */
-		EC_KEY* pubKey;
-
-		/**
-         * Private key object
-         */
-		EC_KEY* privKey;
-
         /**
          * Constructor
          */
-		Endpoint(int index, std::string address, int port, int isLocal, std::string certPath, std::string keyPath);
+		Endpoint(const std::string host, int port, const std::string certPath);
 
         /**
          * Destructor
@@ -65,7 +44,6 @@ class Endpoint {
 		~Endpoint();
 
 };
-
 
 };
 };

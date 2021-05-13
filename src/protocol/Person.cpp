@@ -1,4 +1,5 @@
 #include <chrono>
+#include <unordered_map>
 #include "Person.hpp"
 
 #include "../utils/hashgraph_utils.hpp"
@@ -6,36 +7,35 @@
 namespace hashgraph {
 namespace protocol {
 
-
 /**
  * Find unique famous witnesses 
  *
  * @param witnesses Vector of witnesses to search through
- * @param numNodes Number of network persons
+ * @param endpoints Network endpoints
  */
-static std::vector<Event*> findUFW(std::vector<Event*> const &witnesses, std::size_t numNodes) {
+static std::unordered_map<std::string, Event*> findUFW(std::vector<Event*> const &witnesses, std::vector<types::Endpoint*> *endpoints) {
+	std::unordered_map<std::string, Event*> v;
+	std::unordered_map<std::string, int> b;
 
-	std::vector<Event*> vec(numNodes);
-	for (std::size_t i = 0; i < numNodes; i++)
-		vec[i] = NULL;
-
-	std::vector<int> b(numNodes);
-	std::fill(b.begin(), b.end(), 0);
+	for (std::vector<types::Endpoint*>::iterator it = endpoints->begin(); it != endpoints->end(); ++it) {
+		v[(*it)->identifier] = NULL;
+		b[(*it)->identifier] = 0;
+	}
 
 	for (std::size_t i = 0; i < witnesses.size(); i++) {
 		if (witnesses[i]->getFamous() == true) {
-			int32_t num = witnesses[i]->getData().owner;
-			if (b[num] == 1) {
-				b[num] = -1;
-				vec[num] = NULL;
+			std::string owner = witnesses[i]->getData().owner;
+			if (b[owner] == 1) {
+				b[owner] = -1;
+				v[owner] = NULL;
 			}
-			if (b[num] == 0) {
-				b[num] = 1;
-				vec[num] = witnesses[i];
+			if (b[owner] == 0) {
+				b[owner] = 1;
+				v[owner] = witnesses[i];
 			}
 		}
 	}
-	return vec;
+	return v;
 }
 
 /**
@@ -70,33 +70,24 @@ bool compareEventsLesser(const Event* lhs, const Event* rhs) {
 	return (lhs->getHash().compare(rhs->getHash()) < 0);
 }
 
-Person::Person(types::Endpoint *ep, std::vector<types::Endpoint*> *endpoints) : PersonNetworker(ep, endpoints), currentRound(0) {
+Person::Person(const std::string privKeyPath, const std::string certPath, std::vector<types::Endpoint*> *endpoints) : PersonNetworker(privKeyPath, certPath), PersonApplication(), currentRound(0), endpoints(endpoints) {
 
 	// open file descriptor for logging
 	if (WRITE_LOG) {
 		std::ostringstream filename;
-		filename << "Log" << ep->index << ".log";
+		filename << "Log-" << identifier << ".log";
 		ofs.open(filename.str(), std::ofstream::out | std::ofstream::trunc);
 	}
 
 	// initial event data
 	message::Data d;
-	d.owner 	 = ep->index;
-	d.target 	 = -1;
-	d.payload 	 = 0;
+	d.owner 	 = identifier;
 	d.timestamp  = 0;
 	d.selfHash 	 = "\0";
 	d.gossipHash = "\0";
 	
 	// starter event
 	hashgraph.insert(hashgraph.begin(), new Event(*this, d));
-
-	// initial worth for every person
-	for (std::size_t i = 0; i < endpoints->size(); i++)
-		networth.push_back(100000);
-
-	// start server
-    startServer();
 }
 
 Person::~Person() {
@@ -108,7 +99,7 @@ Person&	Person::operator=(Person const &){
 }
 
 bool Person::operator==(Person const &rhs) {
-	return this->ep->index == rhs.ep->index;
+	return this->identifier == rhs.identifier;
 }
 
 std::vector<Event*>	Person::findWitnesses(int const &round) const {
@@ -148,33 +139,27 @@ void Person::outputOrder(std::size_t n) {
 	ofs << "Consensus Time: " << this->hashgraph[n]->getConsensusTimestamp() << std::endl;
 	ofs << "Self Parent: " 	  << this->hashgraph[n]->getData().selfHash      << std::endl;
 	ofs << "Gossip Parent: "  << this->hashgraph[n]->getData().gossipHash    << std::endl;
-	ofs << "Signature: "      << this->hashgraph[n]->sigR 					 << "|" 
-							  << this->hashgraph[n]->sigS 					 << std::endl;
 
-	if (this->hashgraph[n]->getData().payload) {
-		ofs << "Payload: " << this->hashgraph[n]->getData().payload << " to " << this->hashgraph[n]->getData().target << std::endl;
-		ofs << "Current Networth: ";
-		for (std::size_t i = 0; i < this->networth.size(); i++)
-			ofs << this->networth[i] << " ";
-		ofs << std::endl;
+	if (this->hashgraph[n]->getData().__isset.payload) {
+		ofs << "Payload: " << this->hashgraph[n]->getData().payload.senderId << " sent " << this->hashgraph[n]->getData().payload.amount << " to " << this->hashgraph[n]->getData().payload.receiverId << std::endl;
 	}
 	ofs << std::endl;
 }
 
 int	Person::finalizeOrder(std::size_t n, int const &r, std::vector<Event*> const &w) {
 	std::vector<int64_t> s;
-	std::vector<Event*> ufw;
+	std::unordered_map<std::string, Event*> ufw;
 	Event *tmp;
 
-	ufw = findUFW(w, this->endpoints->size());
-	
+	ufw = findUFW(w, this->endpoints);
+
 	std::size_t j;
-	for (j = 0; j < this->endpoints->size() && (!ufw[j] || ufw[j]->ancestor(*(hashgraph[n]))); j++)
+	for (j = 0; j < this->endpoints->size() && (!ufw[this->endpoints->at(j)->identifier] || ufw[this->endpoints->at(j)->identifier]->ancestor(*(hashgraph[n]))); j++)
 		;
 	if (j == this->endpoints->size()) {
 		for (j = 0; j < this->endpoints->size(); j++) {
-			if (ufw[j]) {
-				tmp = ufw[j];
+			if (ufw[this->endpoints->at(j)->identifier]) {
+				tmp = ufw[this->endpoints->at(j)->identifier];
 				while (tmp->getSelfParent() && tmp->getSelfParent()->ancestor(*(hashgraph[n])))
 					tmp = tmp->getSelfParent();
 				s.push_back(tmp->getData().timestamp);
@@ -185,9 +170,13 @@ int	Person::finalizeOrder(std::size_t n, int const &r, std::vector<Event*> const
 		hashgraph[n]->setRoundReceived(r);
 		std::sort(s.begin(),s.end());
 		hashgraph[n]->setConsensusTimestamp(s[s.size() / 2]);
-		if (hashgraph[n]->getData().payload != 0) {
-			this->networth[hashgraph[n]->getData().owner]  -= hashgraph[n]->getData().payload;
-			this->networth[hashgraph[n]->getData().target] += hashgraph[n]->getData().payload;
+		if (hashgraph[n]->getData().__isset.payload) {
+			this->storeAmountTransfer(
+				hashgraph[n]->getData().payload.senderId,
+				hashgraph[n]->getData().payload.receiverId,
+				hashgraph[n]->getData().payload.amount, 
+				hashgraph[n]->getConsensusTimestamp()
+			);
 		}
 		if (WRITE_LOG) {
 			outputOrder(n);
@@ -221,31 +210,33 @@ void Person::gossip(types::Endpoint *target) {
 	// sort the hashgraph
 	this->mutex.lock();
 	std::sort(hashgraph.begin(), hashgraph.end(), compareEventsGreater);
-	Event* check = getTopNode(target->index);
+	Event* check = getTopNode(target->identifier);
 	this->mutex.unlock();
 
-	std::vector<bool> b(this->endpoints->size());
-	std::fill(b.begin(), b.end(), false);
+	std::unordered_map<std::string, bool> b;
+	for (std::vector<types::Endpoint*>::iterator it = this->endpoints->begin(); it != this->endpoints->end(); ++it) {
+		b[(*it)->identifier] = false;
+	}
 
 	// find an events in the hashgraph the target has not seen yet
-	std::vector<message::Data> arr;
+	std::vector<message::Data> gossipData;
 	for (std::size_t i = 0; i < hashgraph.size(); i++) {
 		if (!b[hashgraph[i]->getData().owner]) {
 			if (check && check->see(*(hashgraph[i])))
 				b[hashgraph[i]->getData().owner] = true;
-			arr.push_back(hashgraph[i]->getData());
+			gossipData.push_back(hashgraph[i]->getData());
 		}
 	}
 
-	this->sendGossip(this->ep, target, arr);
+	this->sendGossip(target, gossipData);
 }
 
-Event *Person::getTopNode(int32_t index) const {
+Event *Person::getTopNode(std::string identifier) const {
 	Event *top = NULL;
 	int64_t t  = -1;
 
 	for (std::size_t i = 0; i < hashgraph.size(); i++) {
-		if (hashgraph[i]->getData().owner == index && hashgraph[i]->getData().timestamp > t) {
+		if (hashgraph[i]->getData().owner == identifier && hashgraph[i]->getData().timestamp > t) {
 			t   = hashgraph[i]->getData().timestamp;
 			top = hashgraph[i];
 		}
@@ -259,12 +250,12 @@ Event *Person::getForkNode(Person const &target) const {
 	int64_t t2  = -1;
 
 	for (std::size_t i = 0; i < hashgraph.size(); i++) {
-		if (hashgraph[i]->getData().owner == target.ep->index && hashgraph[i]->getData().timestamp > t) {
+		if (hashgraph[i]->getData().owner == target.identifier && hashgraph[i]->getData().timestamp > t) {
 			t = hashgraph[i]->getData().timestamp;
 		}
 	}
 	for (std::size_t i = 0; i < hashgraph.size(); i++) {
-		if (hashgraph[i]->getData().owner == target.ep->index && hashgraph[i]->getData().timestamp > t2 && hashgraph[i]->getData().timestamp != t) {
+		if (hashgraph[i]->getData().owner == target.identifier && hashgraph[i]->getData().timestamp > t2 && hashgraph[i]->getData().timestamp != t) {
 			t2 = hashgraph[i]->getData().timestamp;
 			fork = hashgraph[i];
 		}
@@ -272,35 +263,23 @@ Event *Person::getForkNode(Person const &target) const {
 	return fork;
 }
 
-void Person::createEvent(int32_t gossiper) {
+void Person::createEvent(std::string gossiper) {
 
 	// unix timestamp in milliseconds
 	int64_t timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
 		std::chrono::system_clock::now().time_since_epoch()).count();
 
 	message::Data d;
-	d.payload    =  0;
-	d.target     = -1;
-	d.owner      = this->ep->index;
+	d.owner      = this->identifier;
 	d.timestamp  = timestamp;
-	d.selfHash   = (this->getTopNode(this->ep->index) ? this->getTopNode(this->ep->index)->getHash() : "\0");
+	d.selfHash   = (this->getTopNode(this->identifier) ? this->getTopNode(this->identifier)->getHash() : "\0");
 	d.gossipHash = (this->getTopNode(gossiper) ? this->getTopNode(gossiper)->getHash() : "\0");
-	
 	
 	// process first transfer request in queue
 	if (this->transferRequests.size() > 0) {
-		d.payload = this->transferRequests.front().payload;
-		d.target  = this->transferRequests.front().target;
+		d.__set_payload(this->transferRequests.front());
 		this->transferRequests.pop();
 	}
-
-	/*
-	// gossip a payload every 10th message (approx.)
-	if (!(std::rand() % 10)) {
-		d.payload = std::rand() % 1000;
-		d.target  = std::rand() % this->endpoints->size();
-	}
-	*/
 	
 	// only for testing, force a fork every 100th message (approx.)
 	if (MAKE_FORKS && !(std::rand() % 100) && this->getForkNode(*this)) {
@@ -310,14 +289,29 @@ void Person::createEvent(int32_t gossiper) {
 	hashgraph.insert(hashgraph.begin(), new Event(*this, d));
 }
 
-void Person::transfer(const int32_t payload, const int32_t target) {
-	types::Transfer t;
-	t.payload = payload;
-	t.target  = target;
-	this->transferRequests.push(t);
+void Person::crypto_transfer(const std::string& ownerPkDer, const int32_t amount, const std::string& receiverId, const std::string& challenge, const std::string& sigDer) {
+	std::lock_guard<std::mutex> guard(this->mutex);
+
+	// calculate owner identifier
+	std::string ownerId = utils::encodeIdentifier(ownerPkDer);
+
+	// verify request
+	if (utils::verifyECDSASignature(ownerPkDer, sigDer, (ownerId + "|" + receiverId + "|" + std::to_string(amount)))) {
+		message::Payload p;
+		p.senderId   = ownerId;
+		p.receiverId = receiverId;
+		p.amount     = amount;
+		this->transferRequests.push(p);
+	}
 }
 
-void Person::recieveGossip(const int32_t gossiper, const std::vector<message::Data> &gossip) {
+int32_t Person::user_amount(const std::string& ownerId) {
+	std::lock_guard<std::mutex> guard(this->mutex);
+	
+	return this->getAmountForUser(ownerId); 
+}
+
+void Person::receiveGossip(const std::string& gossiper, const std::vector<message::Data> &gossip) {
 	std::lock_guard<std::mutex> guard(this->mutex);
 
 	Event *tmp;
@@ -414,7 +408,6 @@ void Person::removeOldBalls() {
 		}
 	}
 }
-
 
 };
 };

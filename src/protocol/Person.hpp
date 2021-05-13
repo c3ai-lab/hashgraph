@@ -14,10 +14,9 @@
 
 #include "Event.hpp"
 #include "PersonNetworker.hpp"
+#include "PersonApplication.hpp"
 #include "../types/Endpoint.hpp"
-#include "../types/Transfer.hpp"
 #include "../message/Gossip.h"
-
 
 #ifndef WRITE_LOG
 #define WRITE_LOG 0
@@ -30,20 +29,19 @@
 namespace hashgraph {
 namespace protocol {
 
-
 class Event;
 
 /**
  * Person class
  */
-class Person : public PersonNetworker {
+class Person : public PersonNetworker, public PersonApplication {
 	
 	private:
 
 		/**
          * Buffer for transfers to process
          */
-		std::queue<types::Transfer> transferRequests;
+		std::queue<message::Payload> transferRequests;
 
 		/**
          * Hashgraph
@@ -65,14 +63,14 @@ class Person : public PersonNetworker {
 		 * 
 		 * @param gossiper Index of the gossiper
 		 */
-		void createEvent(int32_t gossiper);
+		void createEvent(std::string gossiper);
 
 		/**
 		 * Get the most recent event in the hashgraph that was created by the person with the given index
 		 *
-		 * @param index Person index for the event to search
+		 * @param identifier Person identifier for the event to search
 		 */
-		Event *getTopNode(int32_t index) const;
+		Event *getTopNode(std::string identifier) const;
 
 		/**
 		 * THIS FUNCTION IS ONLY TO TEST FORKS, DO NOT USE THIS UNLESS YOU WANT TO CHEAT
@@ -84,17 +82,18 @@ class Person : public PersonNetworker {
 	public:
 
 		/**
-		 * Contains the worth for every node
-		 */
-		std::vector<int64_t> networth;
+         * Remote endpoints
+         */
+        std::vector<types::Endpoint*> *endpoints;
 
 		/**
 		 * Constructor
 		 * 
-		 * @param ep Endpoint of this node
+		 * @param privKeyPath Path of the private key file
+		 * @param certPath Path of the certificate file
 		 * @param endpoints Vector of hashgraph endpoints
 		 */
-		Person(types::Endpoint *ep, std::vector<types::Endpoint*> *endpoints);
+		Person(const std::string privKeyPath, const std::string certPath, std::vector<types::Endpoint*> *endpoints);
 
 		/**
 		 * Destructor
@@ -172,18 +171,28 @@ class Person : public PersonNetworker {
 		/**
 		 * Handle incoming gossip data
 		 *
-		 * @param gossiper Creator index of the gossip data
+		 * @param gossiper Creator identifier of the gossip data
 		 * @param gossip Gossip data vector
 		 */
-		void recieveGossip(const int32_t gossiper, const std::vector<message::Data> &gossip);
+		void receiveGossip(const std::string& gossiper, const std::vector<message::Data> &gossip);
 
-		/**
-         * Called on incoming transfer request
+        /**
+         * Transfer request from a user
          * 
-         * @param payload
-         * @param target
+         * @param ownerPkDer
+		 * @param amount
+         * @param receiverId
+         * @param challenge
+         * @param sigDer
          */
-        void transfer(const int32_t payload, const int32_t target);
+		void crypto_transfer(const std::string& ownerPkDer, const int32_t amount, const std::string& receiverId, const std::string& challenge, const std::string& sigDer);
+
+        /**
+         * Request user amount
+         * 
+         * @param ownerId
+         */
+		int32_t user_amount(const std::string& ownerId);
 
 		/**
 		 * Gets the current round
@@ -202,7 +211,6 @@ class Person : public PersonNetworker {
 		 */
 		void removeOldBalls();
 };
-
 
 };
 };
