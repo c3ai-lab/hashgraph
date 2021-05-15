@@ -14,6 +14,9 @@ keyPath: "../tests/config/node$1/server.key"
 # Path to the nodes' certificate
 certPath: "../tests/config/node$1/server.cert"
 
+# Path to the database file
+databasePath: "node$1.sqlite"
+
 # List of all nodes in the hashgraph network
 network: 
 EOT

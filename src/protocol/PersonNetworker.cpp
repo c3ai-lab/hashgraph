@@ -1,7 +1,6 @@
 
 #include <fstream>
 #include <streambuf>
-
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/protocol/TBinaryProtocol.h>
@@ -9,7 +8,6 @@
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/TSSLServerSocket.h>
-
 #include "PersonNetworker.hpp"
 #include "../utils/hashgraph_utils.hpp"
 

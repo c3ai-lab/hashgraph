@@ -2,7 +2,11 @@
 #define HASHGRAPH_UTILS_HPP
 
 #include <string>
+#include <cstdint>
+#include <vector>
 #include <openssl/ec.h>
+#include "sqlite3.h"
+#include "../message/Gossip.h"
 
 namespace hashgraph {
 namespace utils {
@@ -92,6 +96,40 @@ std::string getIdentifierFromPrivatePEM(const std::string pem);
  * @param pem
  */
 std::string getIdentifierFromCertPEM(const std::string pem);
+
+/**
+ * Create a database connection and initialize the required tables
+ *
+ * @param databasePath Path of the sqlite file
+ */
+sqlite3* prepareDatabase(std::string databasePath);
+
+/**
+ * Close the database connection
+ *
+ * @param db The database connection object
+ */
+void closeDatabase(sqlite3 *db);
+
+/**
+ * Stores a balance transfer
+ *
+ * @param db
+ * @param sender
+ * @param receiver
+ * @param amount
+ * @param timestamp
+ */
+void storeBalanceTransfer(sqlite3 *db, std::string sender, std::string receiver, int amount, int64_t timestamp);
+
+/**
+ * Return the balance history
+ *
+ * @param db
+ * @param identifier
+ * @param history
+ */
+void getTransferHistory(sqlite3 *db, std::string identifier, std::vector<message::BalanceTransfer> &history);
 
 };
 };

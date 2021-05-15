@@ -10,6 +10,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(Yaml)
 include(Thrift)
 include(Crypto)
+include(SQLite)
 
 # compiler settings
 set(CMAKE_CXX_STANDARD 11)
@@ -28,6 +29,7 @@ add_executable(hashgraph
   src/protocol/PersonApplication.cpp
   src/types/Endpoint.cpp
   src/utils/sha.cpp
+  src/utils/sqlite.cpp
   src/utils/ecdsa.cpp
   src/utils/encoding.cpp
 )
@@ -36,6 +38,7 @@ add_executable(hashgraph
 add_dependencies(hashgraph
   yaml_project
   thrift_project
+  sqlite_project
   openssl_samples
 )
 
@@ -51,5 +54,5 @@ target_link_directories(hashgraph
 
 # link libraries
 target_link_libraries(hashgraph 
-  PUBLIC yaml-cpp thriftd pthread ssl crypto
+  PUBLIC sqlite3 dl yaml-cpp thriftd pthread ssl crypto
 )

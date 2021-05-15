@@ -2,16 +2,14 @@
 #define HASHGRAPH_PROTOCOL_PERSON_HPP
 
 #include <list>
-#include <map>
 #include <algorithm>
 #include <sstream>
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include <unistd.h>
-#include <ctime>
+#include <string>
 #include <queue>
-
+#include <unistd.h>
 #include "Event.hpp"
 #include "PersonNetworker.hpp"
 #include "PersonApplication.hpp"
@@ -89,11 +87,12 @@ class Person : public PersonNetworker, public PersonApplication {
 		/**
 		 * Constructor
 		 * 
+		 * @param databasePath Path of the database file
 		 * @param privKeyPath Path of the private key file
 		 * @param certPath Path of the certificate file
 		 * @param endpoints Vector of hashgraph endpoints
 		 */
-		Person(const std::string privKeyPath, const std::string certPath, std::vector<types::Endpoint*> *endpoints);
+		Person(const std::string databasePath, const std::string privKeyPath, const std::string certPath, std::vector<types::Endpoint*> *endpoints);
 
 		/**
 		 * Destructor
@@ -188,11 +187,19 @@ class Person : public PersonNetworker, public PersonApplication {
 		void crypto_transfer(const std::string& ownerPkDer, const int32_t amount, const std::string& receiverId, const std::string& challenge, const std::string& sigDer);
 
         /**
-         * Request user balance
+         * Returns the user balance
          * 
          * @param ownerId
          */
 		int32_t balance(const std::string& ownerId);
+
+       /**
+         * Returns the user balance history
+         * 
+         * @param _return
+         * @param ownerId
+         */
+        void balance_history(std::vector<message::BalanceTransfer> & _return, const std::string& ownerId);
 
 		/**
 		 * Gets the current round

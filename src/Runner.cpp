@@ -53,7 +53,11 @@ namespace hashgraph {
         }
 
         // hashgraph node
-        protocol::Person person(config["keyPath"].as<std::string>(), config["certPath"].as<std::string>(), &(this->endpoints));
+        protocol::Person person(
+            config["databasePath"].as<std::string>(),
+            config["keyPath"].as<std::string>(), 
+            config["certPath"].as<std::string>(), 
+            &(this->endpoints));
 
 		// start listening for requests
         person.startServer(config["port"].as<int>());

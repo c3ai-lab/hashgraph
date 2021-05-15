@@ -4,8 +4,8 @@
 #include <string>
 #include <cstdint>
 #include <vector>
-
-#include "../types/Transfer.hpp"
+#include "sqlite3.h"
+#include "../message/Gossip.h"
 
 namespace hashgraph {
 namespace protocol {
@@ -15,22 +15,46 @@ namespace protocol {
  */
 class PersonApplication {
 
+    private:
+
+        /**
+         * Database handle
+         */
+        sqlite3* database;
+
     public:
 
         /**
-         * Transfer history
+         * Store a balance transfer
          */
-        std::vector<types::Transfer> history;
+        void storeBalanceTransfer(const std::string senderId, const std::string receiverId, int32_t amount, int64_t timestamp) ;
 
         /**
-         * Updates the wealth for a user
+         * Return the user balance
+         * 
+         * @param identifier Identifier of the user
          */
-        void storeAmountTransfer(const std::string senderId, const std::string receiverId, int32_t amount, int64_t timestamp) ;
+        int32_t getUserBalance(const std::string identifier);
 
         /**
-         * Returns the wealth for a user
+         * Returns the user balance history
+         * 
+         * @param identifier
+         * @param history
          */
-        int32_t getAmountForUser(const std::string identifier);
+        void getUserBalanceHistory(const std::string identifier, std::vector<message::BalanceTransfer> &history);
+
+		/**
+		 * Constructor
+		 * 
+		 * @param databasePath Path of the database file
+		 */
+		PersonApplication(const std::string databasePath);
+
+		/**
+		 * Destructor
+		 */
+		~PersonApplication();
 };
 
 };

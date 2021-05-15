@@ -1,7 +1,6 @@
 #include <chrono>
 #include <unordered_map>
 #include "Person.hpp"
-
 #include "../utils/hashgraph_utils.hpp"
 
 namespace hashgraph {
@@ -70,7 +69,7 @@ bool compareEventsLesser(const Event* lhs, const Event* rhs) {
 	return (lhs->getHash().compare(rhs->getHash()) < 0);
 }
 
-Person::Person(const std::string privKeyPath, const std::string certPath, std::vector<types::Endpoint*> *endpoints) : PersonNetworker(privKeyPath, certPath), PersonApplication(), currentRound(0), endpoints(endpoints) {
+Person::Person(const std::string databasePath, const std::string privKeyPath, const std::string certPath, std::vector<types::Endpoint*> *endpoints) : PersonNetworker(privKeyPath, certPath), PersonApplication(databasePath), currentRound(0), endpoints(endpoints) {
 
 	// open file descriptor for logging
 	if (WRITE_LOG) {
@@ -171,7 +170,7 @@ int	Person::finalizeOrder(std::size_t n, int const &r, std::vector<Event*> const
 		std::sort(s.begin(),s.end());
 		hashgraph[n]->setConsensusTimestamp(s[s.size() / 2]);
 		if (hashgraph[n]->getData().__isset.payload) {
-			this->storeAmountTransfer(
+			this->storeBalanceTransfer(
 				hashgraph[n]->getData().payload.senderId,
 				hashgraph[n]->getData().payload.receiverId,
 				hashgraph[n]->getData().payload.amount, 
@@ -292,6 +291,9 @@ void Person::createEvent(std::string gossiper) {
 void Person::crypto_transfer(const std::string& ownerPkDer, const int32_t amount, const std::string& receiverId, const std::string& challenge, const std::string& sigDer) {
 	std::lock_guard<std::mutex> guard(this->mutex);
 
+	if (ownerPkDer.empty() || receiverId.empty() || sigDer.empty()) 
+		return;
+
 	// calculate owner identifier
 	std::string ownerId = utils::encodeIdentifier(ownerPkDer);
 
@@ -306,10 +308,14 @@ void Person::crypto_transfer(const std::string& ownerPkDer, const int32_t amount
 }
 
 int32_t Person::balance(const std::string& ownerId) {
-	std::lock_guard<std::mutex> guard(this->mutex);
-	
-	return this->getAmountForUser(ownerId); 
+	return this->getUserBalance(ownerId); 
 }
+
+void Person::balance_history(std::vector<message::BalanceTransfer> & _return, const std::string& ownerId) {
+	return this->getUserBalanceHistory(ownerId, _return); 
+}
+
+
 
 void Person::receiveGossip(const std::string& gossiper, const std::vector<message::Data> &gossip) {
 	std::lock_guard<std::mutex> guard(this->mutex);
