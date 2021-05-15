@@ -126,6 +126,12 @@ class PersonNetworker : virtual public message::GossipIf {
          */
         virtual void balance_history(std::vector<message::BalanceTransfer> & _return, const std::string& ownerId) = 0;
 
+        /**
+         * Generates a challenge
+         * 
+         * @param _return
+         */
+        virtual void challenge(std::string& _return) = 0;
 };
 
 };

@@ -201,6 +201,13 @@ class Person : public PersonNetworker, public PersonApplication {
          */
         void balance_history(std::vector<message::BalanceTransfer> & _return, const std::string& ownerId);
 
+        /**
+         * Generates a challenge
+         * 
+         * @param _return
+         */
+        void challenge(std::string& _return);
+
 		/**
 		 * Gets the current round
 		 * 

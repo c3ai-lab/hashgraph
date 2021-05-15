@@ -35,4 +35,6 @@ service Gossip {
 	i32 balance(1:string ownerId)
 	// return the balance history of the given owner
 	list<BalanceTransfer> balance_history(1:string ownerId)
+	// return a challenge
+	binary challenge()
 }

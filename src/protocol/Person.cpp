@@ -291,14 +291,14 @@ void Person::createEvent(std::string gossiper) {
 void Person::crypto_transfer(const std::string& ownerPkDer, const int32_t amount, const std::string& receiverId, const std::string& challenge, const std::string& sigDer) {
 	std::lock_guard<std::mutex> guard(this->mutex);
 
-	if (ownerPkDer.empty() || receiverId.empty() || sigDer.empty()) 
+	if (ownerPkDer.empty() || receiverId.empty() || sigDer.empty() || challenge.empty()) 
 		return;
 
 	// calculate owner identifier
 	std::string ownerId = utils::encodeIdentifier(ownerPkDer);
 
 	// verify request
-	if (utils::verifyECDSASignature(ownerPkDer, sigDer, (ownerId + "|" + receiverId + "|" + std::to_string(amount)))) {
+	if (utils::verifyECDSASignature(ownerPkDer, sigDer, (challenge + "|" + std::to_string(amount) + "|" + receiverId))) {
 		message::Payload p;
 		p.senderId   = ownerId;
 		p.receiverId = receiverId;
@@ -315,7 +315,9 @@ void Person::balance_history(std::vector<message::BalanceTransfer> & _return, co
 	return this->getUserBalanceHistory(ownerId, _return); 
 }
 
-
+void Person::challenge(std::string& _return) {
+	_return.assign("dummy");
+}
 
 void Person::receiveGossip(const std::string& gossiper, const std::vector<message::Data> &gossip) {
 	std::lock_guard<std::mutex> guard(this->mutex);
