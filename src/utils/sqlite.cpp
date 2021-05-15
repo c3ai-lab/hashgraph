@@ -30,6 +30,7 @@ sqlite3* prepareDatabase(std::string databasePath) {
    sql << "                          NOT NULL, ";
    sql << " owner      VARCHAR (100) NOT NULL, ";
    sql << " round      INTEGER       NOT NULL, ";
+   sql << " time       INTEGER       NOT NULL, ";
    sql << " cnsTime    INTEGER       NOT NULL, ";
    sql << " selfHash   VARCHAR (100) NOT NULL, ";
    sql << " gossipHash VARCHAR (100) NOT NULL, ";
@@ -165,6 +166,39 @@ void getTransferHistory(sqlite3 *db, std::string identifier, std::vector<message
    while (rc == SQLITE_ROW);
 
    sqlite3_finalize(stmt);
+}
+
+void writeToLog(sqlite3 *db, std::string owner, int round, int64_t time, int64_t cnsTime, std::string selfHash, std::string gossipHash, std::string payload) {
+
+   int rc;
+   std::stringstream sql;
+
+   sql << "INSERT INTO Log (owner, round, time, cnsTime, selfHash, gossipHash, payload) VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+   sqlite3_stmt* stmt;
+   rc = sqlite3_prepare_v2(db, sql.str().c_str(), -1, &stmt, 0);
+   if (rc != SQLITE_OK) {
+      printf("SQL error: %s \n", sqlite3_errmsg(db));
+      return;
+   }
+      
+   sqlite3_bind_text(stmt, 1, owner.c_str(), -1, SQLITE_TRANSIENT);
+   sqlite3_bind_int(stmt, 2, round);
+   sqlite3_bind_int64(stmt, 3, time);
+   sqlite3_bind_int64(stmt, 4, cnsTime);
+   sqlite3_bind_text(stmt, 5, selfHash.c_str(), -1, SQLITE_TRANSIENT);
+   sqlite3_bind_text(stmt, 6, gossipHash.c_str(), -1, SQLITE_TRANSIENT);
+   sqlite3_bind_text(stmt, 7, payload.c_str(), -1, SQLITE_TRANSIENT);
+
+   rc = sqlite3_step(stmt);
+   if (rc != SQLITE_DONE){
+      printf("SQL error: %s \n", sqlite3_errmsg(db));
+   }
+
+   rc = sqlite3_finalize(stmt);
+   if (rc != SQLITE_OK) {
+      printf("SQL error: %s \n", sqlite3_errmsg(db));
+   }
 }
 
 };

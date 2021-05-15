@@ -2,6 +2,7 @@
 #define HASHGRAPH_PROTOCOL_EVENT_HPP
 
 #include "Person.hpp"
+#include <sstream>
 #include <unordered_set>
 #include <algorithm>
 #include <array>

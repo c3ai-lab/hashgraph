@@ -131,6 +131,20 @@ void storeBalanceTransfer(sqlite3 *db, std::string sender, std::string receiver,
  */
 void getTransferHistory(sqlite3 *db, std::string identifier, std::vector<message::BalanceTransfer> &history);
 
+/**
+ * Write to log
+ *
+ * @param db
+ * @param owner
+ * @param round
+ * @param time
+ * @param cnsTime
+ * @param selfHash
+ * @param gossipHash
+ * @param payload
+ */
+void writeToLog(sqlite3 *db, std::string owner, int round, int64_t time, int64_t cnsTime, std::string selfHash, std::string gossipHash, std::string payload);
+
 };
 };
 #endif

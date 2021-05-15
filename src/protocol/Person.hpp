@@ -2,10 +2,6 @@
 #define HASHGRAPH_PROTOCOL_PERSON_HPP
 
 #include <list>
-#include <algorithm>
-#include <sstream>
-#include <fstream>
-#include <iostream>
 #include <vector>
 #include <string>
 #include <queue>
@@ -50,11 +46,6 @@ class Person : public PersonNetworker, public PersonApplication {
          * Current round of this node
          */
 		int currentRound;
-
-		/**
-         * Output stream used for logging
-         */
-		std::ofstream ofs;
 
 		/**
 		 * Create an event

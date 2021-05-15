@@ -71,13 +71,6 @@ bool compareEventsLesser(const Event* lhs, const Event* rhs) {
 
 Person::Person(const std::string databasePath, const std::string privKeyPath, const std::string certPath, std::vector<types::Endpoint*> *endpoints) : PersonNetworker(privKeyPath, certPath), PersonApplication(databasePath), currentRound(0), endpoints(endpoints) {
 
-	// open file descriptor for logging
-	if (WRITE_LOG) {
-		std::ostringstream filename;
-		filename << "Log-" << identifier << ".log";
-		ofs.open(filename.str(), std::ofstream::out | std::ofstream::trunc);
-	}
-
 	// initial event data
 	message::Data d;
 	d.owner 	 = identifier;
@@ -90,7 +83,6 @@ Person::Person(const std::string databasePath, const std::string privKeyPath, co
 }
 
 Person::~Person() {
-	ofs.close();
 }
 
 Person&	Person::operator=(Person const &){
@@ -132,17 +124,20 @@ void Person::insertEvent(Event const &event) {
 
 void Person::outputOrder(std::size_t n) {
 
-	ofs << "Node owner: " 	  << this->hashgraph[n]->getData().owner 	   	 << std::endl;
-	ofs << "Round Received: " << this->hashgraph[n]->getRoundRecieved()	   	 << std::endl;
-	ofs << "Timestamp: "  	  << this->hashgraph[n]->getData().timestamp 	 << std::endl;
-	ofs << "Consensus Time: " << this->hashgraph[n]->getConsensusTimestamp() << std::endl;
-	ofs << "Self Parent: " 	  << this->hashgraph[n]->getData().selfHash      << std::endl;
-	ofs << "Gossip Parent: "  << this->hashgraph[n]->getData().gossipHash    << std::endl;
-
+	std::string payload = "";
 	if (this->hashgraph[n]->getData().__isset.payload) {
-		ofs << "Payload: " << this->hashgraph[n]->getData().payload.senderId << " sent " << this->hashgraph[n]->getData().payload.amount << " to " << this->hashgraph[n]->getData().payload.receiverId << std::endl;
+		payload = "Payload: " + this->hashgraph[n]->getData().payload.senderId + " sent " + std::to_string(this->hashgraph[n]->getData().payload.amount) + " to " + this->hashgraph[n]->getData().payload.receiverId;
 	}
-	ofs << std::endl;
+
+	this->writeToLog(
+		this->hashgraph[n]->getData().owner,
+		this->hashgraph[n]->getRoundRecieved(),
+		this->hashgraph[n]->getData().timestamp,
+		this->hashgraph[n]->getConsensusTimestamp(),
+		this->hashgraph[n]->getData().selfHash,
+		this->hashgraph[n]->getData().gossipHash,
+		payload
+	);
 }
 
 int	Person::finalizeOrder(std::size_t n, int const &r, std::vector<Event*> const &w) {

@@ -44,6 +44,19 @@ class PersonApplication {
          */
         void getUserBalanceHistory(const std::string identifier, std::vector<message::BalanceTransfer> &history);
 
+        /**
+         * Write to log
+         *
+         * @param owner
+         * @param round
+         * @param time
+         * @param cnsTime
+         * @param selfHash
+         * @param gossipHash
+         * @param payload
+         */
+        void writeToLog(std::string owner, int round, int64_t time, int64_t cnsTime, std::string selfHash, std::string gossipHash, std::string payload);
+
 		/**
 		 * Constructor
 		 * 

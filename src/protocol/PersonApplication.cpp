@@ -34,5 +34,9 @@ void PersonApplication::getUserBalanceHistory(const std::string identifier, std:
     utils::getTransferHistory(this->database, identifier, history);
 }
 
+void PersonApplication::writeToLog(std::string owner, int round, int64_t time, int64_t cnsTime, std::string selfHash, std::string gossipHash, std::string payload) {
+    utils::writeToLog(this->database, owner, round,  time, cnsTime, selfHash, gossipHash, payload);
+}
+
 };
 };
