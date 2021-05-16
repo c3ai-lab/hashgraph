@@ -1,11 +1,8 @@
-
 #include <atomic>
 #include <signal.h>
 #include <unistd.h>
 #include <cstring>
-
 #include "yaml-cpp/yaml.h"
-
 #include "Runner.hpp"
 
 namespace hashgraph {
@@ -57,6 +54,7 @@ namespace hashgraph {
             config["databasePath"].as<std::string>(),
             config["keyPath"].as<std::string>(), 
             config["certPath"].as<std::string>(), 
+            config["logEvents"].as<bool>(),
             &(this->endpoints));
 
 		// start listening for requests
@@ -81,4 +79,5 @@ namespace hashgraph {
                 break;    
         }
     }
+
 }

@@ -1,11 +1,12 @@
 
 #include "PersonApplication.hpp"
+#include "Event.hpp"
 #include "../utils/hashgraph_utils.hpp"
 
 namespace hashgraph {
 namespace protocol {
 
-PersonApplication::PersonApplication(const std::string databasePath) {
+PersonApplication::PersonApplication(const std::string databasePath, bool logEvents) : logEvents(logEvents) {
 	this->database = utils::prepareDatabase(databasePath);
 }
 
@@ -13,8 +14,14 @@ PersonApplication::~PersonApplication() {
     utils::closeDatabase(this->database);
 }
 
-void PersonApplication::storeBalanceTransfer(const std::string senderId, const std::string receiverId, int32_t amount, int64_t timestamp) {
-    utils::storeBalanceTransfer(this->database, senderId, receiverId, amount, timestamp);
+void PersonApplication::storeBalanceTransfer(const protocol::Event *event) {
+    utils::storeBalanceTransfer(
+		this->database,
+        event->getData().payload.senderId,
+        event->getData().payload.receiverId,
+        event->getData().payload.amount, 
+        event->getConsensusTimestamp()
+    );
 }
 
 int32_t PersonApplication::getUserBalance(const std::string identifier) {
@@ -34,8 +41,24 @@ void PersonApplication::getUserBalanceHistory(const std::string identifier, std:
     utils::getTransferHistory(this->database, identifier, history);
 }
 
-void PersonApplication::writeToLog(std::string owner, int round, int64_t time, int64_t cnsTime, std::string selfHash, std::string gossipHash, std::string payload) {
-    utils::writeToLog(this->database, owner, round,  time, cnsTime, selfHash, gossipHash, payload);
+void PersonApplication::writeEventToLog(const protocol::Event *event) {
+    if (!this->logEvents) return;
+
+	std::string payload = "";
+	if (event->getData().__isset.payload) {
+		payload = event->getData().payload.senderId + " sent " + std::to_string(event->getData().payload.amount) + " to " + event->getData().payload.receiverId;
+	}
+
+    utils::writeToLog(
+        this->database, 
+        event->getData().owner,
+        event->getRoundRecieved(),  
+        event->getData().timestamp, 
+        event->getConsensusTimestamp(),
+        event->getData().selfHash, 
+        event->getData().gossipHash, 
+        payload
+    );
 }
 
 };

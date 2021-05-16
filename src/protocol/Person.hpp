@@ -6,15 +6,10 @@
 #include <string>
 #include <queue>
 #include <unistd.h>
-#include "Event.hpp"
 #include "PersonNetworker.hpp"
 #include "PersonApplication.hpp"
 #include "../types/Endpoint.hpp"
 #include "../message/Gossip.h"
-
-#ifndef WRITE_LOG
-#define WRITE_LOG 0
-#endif
 
 #ifndef MAKE_FORKS
 #define MAKE_FORKS 0
@@ -81,9 +76,10 @@ class Person : public PersonNetworker, public PersonApplication {
 		 * @param databasePath Path of the database file
 		 * @param privKeyPath Path of the private key file
 		 * @param certPath Path of the certificate file
+		 * @param logEvents Write committed events to the log
 		 * @param endpoints Vector of hashgraph endpoints
 		 */
-		Person(const std::string databasePath, const std::string privKeyPath, const std::string certPath, std::vector<types::Endpoint*> *endpoints);
+		Person(const std::string databasePath, const std::string privKeyPath, const std::string certPath, bool logEvents, std::vector<types::Endpoint*> *endpoints);
 
 		/**
 		 * Destructor
@@ -122,13 +118,6 @@ class Person : public PersonNetworker, public PersonApplication {
 		 * @param w
 		 */
 		int finalizeOrder(std::size_t n, int const &r, std::vector<Event*> const &w);
-
-		/**
-		 * Prints event data for a hashgraph event
-		 *
-		 * @param n Index in the hashgraph vector
-		 */
-		void outputOrder(std::size_t n);
 
 		/**
 		 * Set SelfParent and GossiperParent references for every event in the vector

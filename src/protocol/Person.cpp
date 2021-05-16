@@ -1,6 +1,7 @@
 #include <chrono>
 #include <unordered_map>
 #include "Person.hpp"
+#include "Event.hpp"
 #include "../utils/hashgraph_utils.hpp"
 
 namespace hashgraph {
@@ -69,7 +70,7 @@ bool compareEventsLesser(const Event* lhs, const Event* rhs) {
 	return (lhs->getHash().compare(rhs->getHash()) < 0);
 }
 
-Person::Person(const std::string databasePath, const std::string privKeyPath, const std::string certPath, std::vector<types::Endpoint*> *endpoints) : PersonNetworker(privKeyPath, certPath), PersonApplication(databasePath), currentRound(0), endpoints(endpoints) {
+Person::Person(const std::string databasePath, const std::string privKeyPath, const std::string certPath, bool logEvents, std::vector<types::Endpoint*> *endpoints) : PersonNetworker(privKeyPath, certPath), PersonApplication(databasePath, logEvents), currentRound(0), endpoints(endpoints) {
 
 	// initial event data
 	message::Data d;
@@ -122,24 +123,6 @@ void Person::insertEvent(Event const &event) {
 	hashgraph.insert(hashgraph.begin() + i, p);
 }
 
-void Person::outputOrder(std::size_t n) {
-
-	std::string payload = "";
-	if (this->hashgraph[n]->getData().__isset.payload) {
-		payload = "Payload: " + this->hashgraph[n]->getData().payload.senderId + " sent " + std::to_string(this->hashgraph[n]->getData().payload.amount) + " to " + this->hashgraph[n]->getData().payload.receiverId;
-	}
-
-	this->writeToLog(
-		this->hashgraph[n]->getData().owner,
-		this->hashgraph[n]->getRoundRecieved(),
-		this->hashgraph[n]->getData().timestamp,
-		this->hashgraph[n]->getConsensusTimestamp(),
-		this->hashgraph[n]->getData().selfHash,
-		this->hashgraph[n]->getData().gossipHash,
-		payload
-	);
-}
-
 int	Person::finalizeOrder(std::size_t n, int const &r, std::vector<Event*> const &w) {
 	std::vector<int64_t> s;
 	std::unordered_map<std::string, Event*> ufw;
@@ -165,16 +148,10 @@ int	Person::finalizeOrder(std::size_t n, int const &r, std::vector<Event*> const
 		std::sort(s.begin(),s.end());
 		hashgraph[n]->setConsensusTimestamp(s[s.size() / 2]);
 		if (hashgraph[n]->getData().__isset.payload) {
-			this->storeBalanceTransfer(
-				hashgraph[n]->getData().payload.senderId,
-				hashgraph[n]->getData().payload.receiverId,
-				hashgraph[n]->getData().payload.amount, 
-				hashgraph[n]->getConsensusTimestamp()
-			);
+			this->storeBalanceTransfer(hashgraph[n]);
 		}
-		if (WRITE_LOG) {
-			outputOrder(n);
-		}
+		this->writeEventToLog(this->hashgraph[n]);
+
 		return (1);
 	}
 	return (0);

@@ -6,7 +6,6 @@
 #include <string>
 #include <signal.h>
 #include <stdlib.h>
-
 #include "types/Endpoint.hpp"
 #include "protocol/Person.hpp"
 #include "message/Gossip.h"

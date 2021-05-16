@@ -1,12 +1,10 @@
 #ifndef HASHGRAPH_PROTOCOL_EVENT_HPP
 #define HASHGRAPH_PROTOCOL_EVENT_HPP
 
-#include "Person.hpp"
 #include <sstream>
 #include <unordered_set>
 #include <algorithm>
 #include <array>
-
 #include "../message/Gossip.h"
 #include "../types/Endpoint.hpp"
 
@@ -18,9 +16,10 @@ class Person;
 /**
  * Event class
  */
-class Event{
+class Event {
 
 	private:
+	
 		std::vector<Event*> &graph;
 		std::unordered_set<std::string> ancestorsSeen;
 		std::unordered_set<std::string> ancestorsNotSeen;

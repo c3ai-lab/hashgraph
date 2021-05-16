@@ -1,5 +1,5 @@
-#ifndef HASHGRAPH_NETWORKER_HPP
-#define HASHGRAPH_NETWORKER_HPP
+#ifndef HASHGRAPH_PROTOCOL_PERSON_NETWORKER_HPP
+#define HASHGRAPH_PROTOCOL_PERSON_NETWORKER_HPP
 
 #include <string>
 #include <map>
@@ -33,7 +33,7 @@ class PersonNetworker : virtual public message::GossipIf {
         /**
          * Server
          */
-        std::shared_ptr<TSimpleServer> server;
+        std::shared_ptr<apache::thrift::server::TSimpleServer> server;
 
         /**
          * Server thread

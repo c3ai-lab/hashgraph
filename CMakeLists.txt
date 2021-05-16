@@ -15,7 +15,7 @@ include(SQLite)
 # compiler settings
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-g -Wall -DWRITE_LOG") # -DDEBUG -DMAKE_FORKS
+set(CMAKE_CXX_FLAGS "-g -Wall") # -DDEBUG -DMAKE_FORKS
 
 # set hashgraph executable
 add_executable(hashgraph 

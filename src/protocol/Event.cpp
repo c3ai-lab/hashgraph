@@ -1,6 +1,6 @@
-
 #include <unordered_map>
 #include "Event.hpp"
+#include "Person.hpp"
 #include "../utils/hashgraph_utils.hpp"
 
 namespace hashgraph {
@@ -250,7 +250,7 @@ char Event::getFamous() const {
 	return this->famous;
 }
 
-void Event::setFamous(char const &fame){
+void Event::setFamous(char const &fame) {
 	this->famous = fame;
 }
 

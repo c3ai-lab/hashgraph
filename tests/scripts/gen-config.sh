@@ -17,6 +17,9 @@ certPath: "../tests/config/node$1/server.cert"
 # Path to the database file
 databasePath: "node$1.sqlite"
 
+# Log all committed events
+logEvents: true
+
 # List of all nodes in the hashgraph network
 network: 
 EOT

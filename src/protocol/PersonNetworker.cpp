@@ -57,7 +57,6 @@ void *PersonNetworker::serverStarter(PersonNetworker* ctx, int port) {
 
     // ssl transport
     std::shared_ptr<TSSLSocketFactory> sslSocketFactory(new TSSLSocketFactory(SSLProtocol::TLSv1_2));
-    sslSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
     sslSocketFactory->loadCertificateFromBuffer(ctx->certifficatePEM.c_str());
     sslSocketFactory->loadPrivateKeyFromBuffer(ctx->privKeyPEM.c_str());
     sslSocketFactory->authenticate(false);
@@ -82,7 +81,6 @@ bool PersonNetworker::sendGossip(types::Endpoint *target, const std::vector<mess
 
     // ssl transport
     std::shared_ptr<TSSLSocketFactory> sslSocketFactory(new TSSLSocketFactory(SSLProtocol::TLSv1_2));
-    sslSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
     sslSocketFactory->loadTrustedCertificatesFromBuffer(target->certificatePEM.c_str());
 
 	std::shared_ptr<TSSLSocket> socket            = sslSocketFactory->createSocket(target->host, target->port);
@@ -90,7 +88,6 @@ bool PersonNetworker::sendGossip(types::Endpoint *target, const std::vector<mess
 	std::shared_ptr<TBinaryProtocol> protocol     = std::make_shared<TBinaryProtocol>(transport);
 
 	message::GossipClient client(protocol);
-
 	try {
         // connect to remote server
 		transport->open();
