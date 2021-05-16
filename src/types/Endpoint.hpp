@@ -2,6 +2,8 @@
 #define HASHGRAPH_TYPES_ENDPOINT_HPP
 
 #include <string>
+#include <memory>
+#include "../message/Gossip.h"
 
 namespace hashgraph {
 namespace types {
@@ -11,27 +13,19 @@ namespace types {
  */
 class Endpoint {
 
-	public:
+    private:
 
         /**
-         * Remote port
+         * Client to communicate
          */
-		int port;
+        std::unique_ptr<message::GossipClient> client;
+
+	public:
 
         /**
          * Unique identifier of the node
          */
 		std::string identifier;
-
-		/**
-         * Remote host
-         */
-		std::string host;
-		
-		/**
-         * Certificate in PEM format
-         */
-		std::string certificatePEM;
 
         /**
          * Constructor
@@ -43,6 +37,13 @@ class Endpoint {
          */
 		~Endpoint();
 
+        /**
+         * Exchange gossip data with other nodes
+         * 
+         * @param senderId
+         * @param gossipData
+         */
+        bool exchangeGossipData(const std::string senderId, const std::vector<message::Data> &gossipData);
 };
 
 };

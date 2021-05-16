@@ -8,7 +8,6 @@
 #include <thread>
 #include <mutex>
 #include <cstdint>
-#include <thrift/server/TSimpleServer.h>
 #include <thrift/server/TThreadedServer.h>
 #include "../types/Endpoint.hpp"
 #include "../message/Gossip.h"
@@ -33,7 +32,7 @@ class PersonNetworker : virtual public message::GossipIf {
         /**
          * Server
          */
-        std::shared_ptr<apache::thrift::server::TSimpleServer> server;
+        std::shared_ptr<TThreadedServer> server;
 
         /**
          * Server thread
@@ -83,14 +82,6 @@ class PersonNetworker : virtual public message::GossipIf {
          * Start the server for incoming messages
          */
         void startServer(int port);
-  
-        /**
-         * Gossip a message
-         * 
-         * @param target
-         * @param gossipData
-         */
-        bool sendGossip(types::Endpoint *target, const std::vector<message::Data> &gossipData);
 
         /**
 		 * Receives a gossip from another node

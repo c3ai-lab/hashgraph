@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <atomic>
 #include <cstring>
@@ -41,7 +40,7 @@ int main(int argc, char** argv) {
 
 	// suppress thrift global output
 	apache::thrift::GlobalOutput.setOutputFunction([](const char* msg) {
-		if (DEBUG) {apache::thrift::TOutput::errorTimeWrapper(msg);}
+		if (DEBUG) apache::thrift::TOutput::errorTimeWrapper(msg);
 	});
 
 	// list of network nodes

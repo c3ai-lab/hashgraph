@@ -1,8 +1,6 @@
 
 #include <fstream>
 #include <streambuf>
-#include <thrift/transport/TSocket.h>
-#include <thrift/transport/TServerSocket.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TBufferTransports.h>
@@ -63,7 +61,7 @@ void *PersonNetworker::serverStarter(PersonNetworker* ctx, int port) {
     std::shared_ptr<TServerTransport> serverTransport(new TSSLServerSocket(port, sslSocketFactory));
 
     // start server
-    ctx->server = std::make_shared<TSimpleServer>(processor, serverTransport, transportFactory, protocolFactory);
+    ctx->server = std::make_shared<TThreadedServer>(processor, serverTransport, transportFactory, protocolFactory);
 
     // wait for incoming messages
     ctx->server->serve();
@@ -75,31 +73,6 @@ void PersonNetworker::startServer(int port) {
     this->thread = std::make_shared<std::thread>(
         std::bind(&PersonNetworker::serverStarter, this, port)
     );
-}
-
-bool PersonNetworker::sendGossip(types::Endpoint *target, const std::vector<message::Data> &gossipData) {
-
-    // ssl transport
-    std::shared_ptr<TSSLSocketFactory> sslSocketFactory(new TSSLSocketFactory(SSLProtocol::TLSv1_2));
-    sslSocketFactory->loadTrustedCertificatesFromBuffer(target->certificatePEM.c_str());
-
-	std::shared_ptr<TSSLSocket> socket            = sslSocketFactory->createSocket(target->host, target->port);
-	std::shared_ptr<TBufferedTransport> transport = std::make_shared<TBufferedTransport>(socket);
-	std::shared_ptr<TBinaryProtocol> protocol     = std::make_shared<TBinaryProtocol>(transport);
-
-	message::GossipClient client(protocol);
-	try {
-        // connect to remote server
-		transport->open();
-        // exchange gossip data
-		client.receiveGossip(this->identifier, gossipData);
-        // close connection
-		transport->close();
-	}
-	catch (TException& tx) {
-        return false;
-	}
-    return true;
 }
 
 };

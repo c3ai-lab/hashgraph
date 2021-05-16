@@ -199,8 +199,8 @@ void Person::gossip(types::Endpoint *target) {
 			gossipData.push_back(hashgraph[i]->getData());
 		}
 	}
-
-	this->sendGossip(target, gossipData);
+	
+	target->exchangeGossipData(this->identifier, gossipData);
 }
 
 Event *Person::getTopNode(std::string identifier) const {
