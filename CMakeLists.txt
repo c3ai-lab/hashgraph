@@ -20,7 +20,6 @@ set(CMAKE_CXX_FLAGS "-g -Wall") # -DDEBUG -DMAKE_FORKS
 # set hashgraph executable
 add_executable(hashgraph 
   src/main.cpp
-  src/Runner.cpp
   src/message/Gossip.cpp
   src/message/hashgraph_types.cpp
   src/protocol/Event.cpp

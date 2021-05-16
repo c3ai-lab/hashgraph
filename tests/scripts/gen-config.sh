@@ -2,7 +2,7 @@
 
 # generate a configuration for each node
 cat <<EOT >> settings.yaml
-# Gossip interval
+# Gossip interval in microseconds
 interval: 1000000
 
 # Port

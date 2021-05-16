@@ -1,4 +1,5 @@
 #include <chrono>
+#include <thread>
 #include <unordered_map>
 #include "Person.hpp"
 #include "Event.hpp"
@@ -289,6 +290,24 @@ void Person::balance_history(std::vector<message::BalanceTransfer> & _return, co
 
 void Person::challenge(std::string& _return) {
 	_return.assign("dummy");
+}
+
+void Person::startGossip(int interval, const std::atomic<bool> *quit) {
+
+	// target endpoint
+	types::Endpoint *tar;
+
+	while (!quit->load()) {
+
+		// select a random target from the list of known nodes
+		while ((tar = this->endpoints->at(std::rand() % this->endpoints->size()))->identifier == this->identifier);
+
+		// gossip to target
+		this->gossip(tar);
+		
+		// limit gossip interval
+		std::this_thread::sleep_for(std::chrono::microseconds(interval));  
+	}
 }
 
 void Person::receiveGossip(const std::string& gossiper, const std::vector<message::Data> &gossip) {

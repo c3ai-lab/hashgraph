@@ -4,6 +4,7 @@
 #include <list>
 #include <vector>
 #include <string>
+#include <atomic>
 #include <queue>
 #include <unistd.h>
 #include "PersonNetworker.hpp"
@@ -48,6 +49,13 @@ class Person : public PersonNetworker, public PersonApplication {
 		 * @param gossiper Index of the gossiper
 		 */
 		void createEvent(std::string gossiper);
+
+		/**
+		 * Collect new events from the hashgraph and gossip them to another person
+		 *
+		 * @param target Target endpoint to gossip
+		 */
+		void gossip(types::Endpoint *target);
 
 		/**
 		 * Get the most recent event in the hashgraph that was created by the person with the given index
@@ -141,11 +149,12 @@ class Person : public PersonNetworker, public PersonApplication {
 		std::vector<Event*>	findWitnesses(int const &round) const;
 
 		/**
-		 * Collect new events from the hashgraph and gossip them to another person
+		 * Starts the gossiping process
 		 *
-		 * @param target Target endpoint to gossip
-		 */
-		void gossip(types::Endpoint *target);
+		 * @param interval Interval to wait after each gossip
+		 * @param quit Flag that indicates when to stop
+		 */ 
+		void startGossip(int interval, const std::atomic<bool> *quit);
 
 		/**
 		 * Handle incoming gossip data
@@ -204,6 +213,7 @@ class Person : public PersonNetworker, public PersonApplication {
 		 * Remove outdated and insignificant events from the hashgraph
 		 */
 		void removeOldBalls();
+
 };
 
 };
