@@ -1,10 +1,6 @@
-#ifndef HASHGRAPH_UTILS_ENCODING_HPP
-#define HASHGRAPH_UTILS_ENCODING_HPP
-
 #include <string>
 #include <stdio.h>
 #include <openssl/bn.h>
-
 #include "hashgraph_utils.hpp"
 
 namespace hashgraph {
@@ -45,4 +41,3 @@ const std::string encodeIdentifier(const std::string pubKeyDER) {
 
 };
 };
-#endif

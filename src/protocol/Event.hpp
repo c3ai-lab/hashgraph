@@ -5,7 +5,7 @@
 #include <unordered_set>
 #include <algorithm>
 #include <array>
-#include "../message/Gossip.h"
+#include "../message/Hashgraph.h"
 #include "../types/Endpoint.hpp"
 
 namespace hashgraph {
@@ -26,7 +26,7 @@ class Event {
 		std::unordered_set<std::string> hashesSeen;
 		std::unordered_set<std::string> hashesNotSeen;
 		std::string hash;
-		message::Data d;
+		message::GossipData d;
 		Event *selfParent;
 		Event *gossiperParent;
 		int64_t consensusTimestamp;
@@ -45,7 +45,7 @@ class Event {
 		/**
 		 * Constructor
 		 */
-		Event(Person &p, message::Data const &data);
+		Event(Person &p, message::GossipData const &data);
 
 		/**
 		 * Destructor
@@ -165,7 +165,7 @@ class Event {
 		/**
 		 * Returns the data
 		 */
-		const message::Data	&getData() const;
+		const message::GossipData &getData() const;
 
 		/**
 		 * Returns the event hash
@@ -206,6 +206,11 @@ class Event {
 		 * @param endpoints List of endpoints
 		 */
 		bool stronglySee(Event const &y, std::vector<types::Endpoint*> *endpoints);
+
+		/**
+		 * Verifies whether the payload data of this event is valid
+		 */
+		bool isPayloadValid();
 };
 
 /**

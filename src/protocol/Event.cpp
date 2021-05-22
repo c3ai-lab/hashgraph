@@ -6,7 +6,7 @@
 namespace hashgraph {
 namespace protocol {
 
-Event::Event(Person &p, message::Data const &data) : 
+Event::Event(Person &p, message::GossipData const &data) : 
 	graph(const_cast<std::vector<Event *>&>(p.getHashgraph())),
 	d(data),
 	selfParent(NULL), 
@@ -21,6 +21,16 @@ Event::Event(Person &p, message::Data const &data) :
 }
 
 Event::~Event() {
+}
+
+bool Event::isPayloadValid() {
+	return !this->getData().__isset.payload || utils::verifyGossipPayload(
+		this->getData().payload.senderPkDer,
+		this->getData().payload.amount,
+		this->getData().payload.receiverId,
+		this->getData().payload.challenge,
+		this->getData().payload.sigDer
+	);
 }
 
 std::string Event::makeHash() {
@@ -230,7 +240,7 @@ std::vector<Event*>	&Event::getGraph() const {
 	return this->graph;
 }
 
-const message::Data	&Event::getData() const{
+const message::GossipData &Event::getData() const{
 	return this->d;
 }
 

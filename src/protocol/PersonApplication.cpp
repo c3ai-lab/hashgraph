@@ -17,7 +17,7 @@ PersonApplication::~PersonApplication() {
 void PersonApplication::storeBalanceTransfer(const protocol::Event *event) {
     utils::storeBalanceTransfer(
 		this->database,
-        event->getData().payload.senderId,
+        utils::encodeIdentifier(event->getData().payload.senderPkDer),
         event->getData().payload.receiverId,
         event->getData().payload.amount, 
         event->getConsensusTimestamp()
@@ -46,7 +46,7 @@ void PersonApplication::writeEventToLog(const protocol::Event *event) {
 
 	std::string payload = "";
 	if (event->getData().__isset.payload) {
-		payload = event->getData().payload.senderId + " sent " + std::to_string(event->getData().payload.amount) + " to " + event->getData().payload.receiverId;
+		payload = utils::encodeIdentifier(event->getData().payload.senderPkDer) + " sent " + std::to_string(event->getData().payload.amount) + " to " + event->getData().payload.receiverId;
 	}
 
     utils::writeToLog(

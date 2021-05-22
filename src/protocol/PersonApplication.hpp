@@ -6,7 +6,7 @@
 #include <vector>
 #include "sqlite3.h"
 
-#include "../message/Gossip.h"
+#include "../message/Hashgraph.h"
 
 namespace hashgraph {
 namespace protocol {

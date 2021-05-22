@@ -10,7 +10,7 @@
 #include "PersonNetworker.hpp"
 #include "PersonApplication.hpp"
 #include "../types/Endpoint.hpp"
-#include "../message/Gossip.h"
+#include "../message/Hashgraph.h"
 
 #ifndef MAKE_FORKS
 #define MAKE_FORKS 0
@@ -31,7 +31,7 @@ class Person : public PersonNetworker, public PersonApplication {
 		/**
          * Buffer for transfers to process
          */
-		std::queue<message::Payload> transferRequests;
+		std::queue<message::GossipPayload> transferRequests;
 
 		/**
          * Hashgraph
@@ -162,7 +162,7 @@ class Person : public PersonNetworker, public PersonApplication {
 		 * @param gossiper Creator identifier of the gossip data
 		 * @param gossip Gossip data vector
 		 */
-		void receiveGossip(const std::string& gossiper, const std::vector<message::Data> &gossip);
+		void receiveGossip(const std::string& gossiper, const std::vector<message::GossipData> &gossip);
 
         /**
          * Transfer request from a user

@@ -17,9 +17,10 @@ ExternalProject_Add(sqlite_project
     PREFIX ${PROJECT_SOURCE_DIR}/external
 
     # copy dummy file
-    PATCH_COMMAND   ${CMAKE_COMMAND} -E copy
-                    ${CMAKE_SOURCE_DIR}/external/tmp/SQLite-CMakeLists.txt
-                    ${CMAKE_SOURCE_DIR}/external/src/sqlite_project/CMakeLists.txt
+    PATCH_COMMAND   
+        ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/external/tmp/SQLite-CMakeLists.txt
+        ${CMAKE_SOURCE_DIR}/external/src/sqlite_project/CMakeLists.txt
 
     # configure step
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_SOURCE_DIR}/external

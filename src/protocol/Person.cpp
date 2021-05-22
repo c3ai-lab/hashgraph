@@ -74,7 +74,7 @@ bool compareEventsLesser(const Event* lhs, const Event* rhs) {
 Person::Person(const std::string databasePath, const std::string privKeyPath, const std::string certPath, bool logEvents, std::vector<types::Endpoint*> *endpoints) : PersonNetworker(privKeyPath, certPath), PersonApplication(databasePath, logEvents), currentRound(0), endpoints(endpoints) {
 
 	// initial event data
-	message::Data d;
+	message::GossipData d;
 	d.owner 	 = identifier;
 	d.timestamp  = 0;
 	d.selfHash 	 = "\0";
@@ -191,7 +191,7 @@ void Person::gossip(types::Endpoint *target) {
 	}
 
 	// find an events in the hashgraph the target has not seen yet
-	std::vector<message::Data> gossipData;
+	std::vector<message::GossipData> gossipData;
 	for (std::size_t i = 0; i < hashgraph.size(); i++) {
 		if (!b[hashgraph[i]->getData().owner]) {
 			if (check && check->see(*(hashgraph[i])))
@@ -241,7 +241,7 @@ void Person::createEvent(std::string gossiper) {
 	int64_t timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
 		std::chrono::system_clock::now().time_since_epoch()).count();
 
-	message::Data d;
+	message::GossipData d;
 	d.owner      = this->identifier;
 	d.timestamp  = timestamp;
 	d.selfHash   = (this->getTopNode(this->identifier) ? this->getTopNode(this->identifier)->getHash() : "\0");
@@ -262,20 +262,15 @@ void Person::createEvent(std::string gossiper) {
 }
 
 void Person::crypto_transfer(const std::string& ownerPkDer, const int32_t amount, const std::string& receiverId, const std::string& challenge, const std::string& sigDer) {
-	std::lock_guard<std::mutex> guard(this->mutex);
+	if (utils::verifyGossipPayload(ownerPkDer, amount, receiverId, challenge, sigDer)) {
+        std::lock_guard<std::mutex> guard(this->mutex);
 
-	if (ownerPkDer.empty() || receiverId.empty() || sigDer.empty() || challenge.empty()) 
-		return;
-
-	// calculate owner identifier
-	std::string ownerId = utils::encodeIdentifier(ownerPkDer);
-
-	// verify request
-	if (utils::verifyECDSASignature(ownerPkDer, sigDer, (challenge + "|" + std::to_string(amount) + "|" + receiverId))) {
-		message::Payload p;
-		p.senderId   = ownerId;
-		p.receiverId = receiverId;
-		p.amount     = amount;
+		message::GossipPayload p;
+		p.senderPkDer = ownerPkDer;
+        p.amount      = amount;
+        p.receiverId  = receiverId;
+        p.challenge   = challenge;
+        p.sigDer      = sigDer;
 		this->transferRequests.push(p);
 	}
 }
@@ -310,7 +305,7 @@ void Person::startGossip(int interval, const std::atomic<bool> *quit) {
 	}
 }
 
-void Person::receiveGossip(const std::string& gossiper, const std::vector<message::Data> &gossip) {
+void Person::receiveGossip(const std::string& gossiper, const std::vector<message::GossipData> &gossip) {
 	std::lock_guard<std::mutex> guard(this->mutex);
 
 	Event *tmp;
@@ -322,12 +317,12 @@ void Person::receiveGossip(const std::string& gossiper, const std::vector<messag
 		// create event from gossip data
 		tmp = new Event(*this, gossip[i]);
 
-		// check whether new event already exists in hashgraph
+		// check whether new event not already exists in hashgraph and its payload is valid
 		for (n = 0; n < hashgraph.size(); n++) {
 			if (hashgraph[n]->getHash() == tmp->getHash())
 				break;
 		}
-		if (n >= hashgraph.size()) {
+		if ((n >= hashgraph.size()) && tmp->isPayloadValid()) {
 			hashgraph.insert(hashgraph.begin(), tmp);
 			nEvents.push_back(tmp);
 		}

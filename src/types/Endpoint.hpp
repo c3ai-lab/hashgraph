@@ -3,7 +3,7 @@
 
 #include <string>
 #include <memory>
-#include "../message/Gossip.h"
+#include "../message/Hashgraph.h"
 
 namespace hashgraph {
 namespace types {
@@ -18,7 +18,7 @@ class Endpoint {
         /**
          * Client to communicate
          */
-        std::unique_ptr<message::GossipClient> client;
+        std::unique_ptr<message::HashgraphClient> client;
 
 	public:
 
@@ -43,7 +43,7 @@ class Endpoint {
          * @param senderId
          * @param gossipData
          */
-        bool exchangeGossipData(const std::string senderId, const std::vector<message::Data> &gossipData);
+        bool exchangeGossipData(const std::string senderId, const std::vector<message::GossipData> &gossipData);
 };
 
 };

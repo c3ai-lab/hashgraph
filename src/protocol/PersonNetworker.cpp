@@ -49,7 +49,7 @@ void *PersonNetworker::serverStarter(PersonNetworker* ctx, int port) {
 
     // https://stackoverflow.com/questions/28523035/best-way-to-create-a-fake-smart-pointer-when-you-need-one-but-only-have-a-refere
     std::shared_ptr<PersonNetworker> handler(std::shared_ptr<PersonNetworker>(std::shared_ptr<PersonNetworker>(), ctx));
-    std::shared_ptr<TProcessor> processor(new message::GossipProcessor(handler));
+    std::shared_ptr<TProcessor> processor(new message::HashgraphProcessor(handler));
     std::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
     std::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 

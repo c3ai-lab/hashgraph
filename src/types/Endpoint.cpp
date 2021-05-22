@@ -1,4 +1,3 @@
-
 #include <fstream>
 #include <streambuf>
 #include <thrift/transport/TSocket.h>
@@ -32,12 +31,12 @@ Endpoint::Endpoint(const std::string host, int port, const std::string certPath)
 	std::shared_ptr<TBufferedTransport> transport = std::make_shared<TBufferedTransport>(socket);
 	std::shared_ptr<TBinaryProtocol> protocol     = std::make_shared<TBinaryProtocol>(transport);
 
-	this->client = std::unique_ptr<message::GossipClient>(
-		new message::GossipClient(protocol)
+	this->client = std::unique_ptr<message::HashgraphClient>(
+		new message::HashgraphClient(protocol)
 	);
 }
 
-bool Endpoint::exchangeGossipData(const std::string senderId, const std::vector<message::Data> &gossipData) {
+bool Endpoint::exchangeGossipData(const std::string senderId, const std::vector<message::GossipData> &gossipData) {
 	try {
 		// connect to remote server
 		if (!this->client->getInputProtocol()->getTransport()->isOpen())

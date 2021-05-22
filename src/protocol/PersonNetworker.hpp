@@ -10,7 +10,7 @@
 #include <cstdint>
 #include <thrift/server/TThreadedServer.h>
 #include "../types/Endpoint.hpp"
-#include "../message/Gossip.h"
+#include "../message/Hashgraph.h"
 
 using namespace apache::thrift::server;
 
@@ -20,7 +20,7 @@ namespace protocol {
 /**
  * PersonNetworker
  */
-class PersonNetworker : virtual public message::GossipIf {
+class PersonNetworker : virtual public message::HashgraphIf {
 
     private:
 
@@ -89,7 +89,7 @@ class PersonNetworker : virtual public message::GossipIf {
 		 * @param gossiper Creator identifier of the gossip data
 		 * @param gossip Gossip data vector
          */
-        virtual void receiveGossip(const std::string& gossiper, const std::vector<message::Data> &gossip) = 0;
+        virtual void receiveGossip(const std::string& gossiper, const std::vector<message::GossipData> &gossip) = 0;
 
         /**
          * Transfer request from a user

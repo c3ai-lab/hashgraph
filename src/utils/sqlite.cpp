@@ -1,12 +1,9 @@
-#ifndef HASHGRAPH_UTILS_SQLITE_HPP
-#define HASHGRAPH_UTILS_SQLITE_HPP
-
 #include <sstream>
 #include <string>
 #include <cstdint>
 #include <vector>
 #include "sqlite3.h"
-#include "../message/Gossip.h"
+#include "../message/Hashgraph.h"
 
 namespace hashgraph {
 namespace utils {
@@ -203,4 +200,3 @@ void writeToLog(sqlite3 *db, std::string owner, int round, int64_t time, int64_t
 
 };
 };
-#endif

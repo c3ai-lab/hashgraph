@@ -6,7 +6,7 @@
 #include <vector>
 #include <openssl/ec.h>
 #include "sqlite3.h"
-#include "../message/Gossip.h"
+#include "../message/Hashgraph.h"
 
 namespace hashgraph {
 namespace utils {
@@ -144,6 +144,18 @@ void getTransferHistory(sqlite3 *db, std::string identifier, std::vector<message
  * @param payload
  */
 void writeToLog(sqlite3 *db, std::string owner, int round, int64_t time, int64_t cnsTime, std::string selfHash, std::string gossipHash, std::string payload);
+
+/**
+ * Verifies gossip data
+ *
+ * @param ownerPkDer
+ * @param amount
+ * @param receiverId
+ * @param challenge
+ * @param cnsTime
+ * @param sigDer
+ */
+bool verifyGossipPayload(const std::string ownerPkDer, const int32_t amount, const std::string receiverId, const std::string challenge, const std::string sigDer);
 
 };
 };

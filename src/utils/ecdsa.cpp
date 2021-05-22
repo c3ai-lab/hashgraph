@@ -1,6 +1,3 @@
-#ifndef HASHGRAPH_UTILS_SHA384_HPP
-#define HASHGRAPH_UTILS_SHA384_HPP
-
 #include <string>
 #include <iostream>
 #include <openssl/pem.h>
@@ -8,7 +5,6 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/ecdsa.h>
-
 #include "hashgraph_utils.hpp"
 
 namespace hashgraph {
@@ -122,4 +118,3 @@ bool verifyECDSASignature(const std::string pubKeyDER, const std::string sigDER,
 
 };
 };
-#endif

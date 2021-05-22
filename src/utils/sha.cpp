@@ -1,6 +1,3 @@
-#ifndef HASHGRAPH_UTILS_SHA_HPP
-#define HASHGRAPH_UTILS_SHA_HPP
-
 #include <string>
 #include <openssl/sha.h>
 #include <openssl/evp.h>
@@ -45,4 +42,3 @@ const std::string SHA3(const std::string data) {
 
 };
 };
-#endif
