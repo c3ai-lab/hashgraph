@@ -1,64 +1,49 @@
-
+#include <sstream>
 #include "PersonApplication.hpp"
 #include "Event.hpp"
+#include "../runner/SQLiteLogRunner.hpp"
+#include "../runner/SQLiteTransferRunner.hpp"
 #include "../utils/hashgraph_utils.hpp"
 
 namespace hashgraph {
 namespace protocol {
 
-PersonApplication::PersonApplication(const std::string databasePath, bool logEvents) : logEvents(logEvents) {
-	this->database = utils::prepareDatabase(databasePath);
+PersonApplication::PersonApplication() : 
+    logEvents(false) {
 }
 
-PersonApplication::~PersonApplication() {
-    utils::closeDatabase(this->database);
+void PersonApplication::setEventLogging(bool logEvents) {
+    this->logEvents = logEvents;
 }
 
-void PersonApplication::storeBalanceTransfer(const protocol::Event *event) {
-    utils::storeBalanceTransfer(
-		this->database,
+void PersonApplication::storeTransferData(const protocol::Event *event) {
+    this->getManager()->add(std::make_shared<runner::SQLiteTransferRunner>(
+		this->getDatabasePath(),
         utils::encodeIdentifier(event->getData().payload.senderPkDer),
         event->getData().payload.receiverId,
         event->getData().payload.amount, 
         event->getConsensusTimestamp()
-    );
-}
-
-int32_t PersonApplication::getUserBalance(const std::string identifier) {
-    
-    std::vector<message::BalanceTransfer> history;
-    utils::getTransferHistory(this->database, identifier, history);
-
-    int32_t amount = 0;
-    for(std::vector<message::BalanceTransfer>::iterator it = history.begin(); it != history.end(); ++it) {
-        if (it->senderId   == identifier) amount -= it->amount;
-        if (it->receiverId == identifier) amount += it->amount;
-    }
-    return amount;
-}
-
-void PersonApplication::getUserBalanceHistory(const std::string identifier, std::vector<message::BalanceTransfer> &history) {
-    utils::getTransferHistory(this->database, identifier, history);
+    ));
 }
 
 void PersonApplication::writeEventToLog(const protocol::Event *event) {
     if (!this->logEvents) return;
 
-	std::string payload = "";
+    std::stringstream payload;
 	if (event->getData().__isset.payload) {
-		payload = utils::encodeIdentifier(event->getData().payload.senderPkDer) + " sent " + std::to_string(event->getData().payload.amount) + " to " + event->getData().payload.receiverId;
-	}
+        event->getData().payload.printTo(payload);
+    }
 
-    utils::writeToLog(
-        this->database, 
+    this->getManager()->add(std::make_shared<runner::SQLiteLogRunner>(
+        this->getDatabasePath(), 
         event->getData().owner,
         event->getRoundRecieved(),  
         event->getData().timestamp, 
         event->getConsensusTimestamp(),
         event->getData().selfHash, 
         event->getData().gossipHash, 
-        payload
-    );
+        payload.str()
+    ));
 }
 
 };

@@ -2,11 +2,9 @@
 #define HASHGRAPH_PROTOCOL_PERSON_APPLICATION_HPP
 
 #include <string>
-#include <cstdint>
-#include <vector>
-#include "sqlite3.h"
-
+#include "SuperPerson.hpp"
 #include "../message/Hashgraph.h"
+
 
 namespace hashgraph {
 namespace protocol {
@@ -16,14 +14,9 @@ class Event;
 /**
  * PersonApplication
  */
-class PersonApplication {
+class PersonApplication : virtual public SuperPerson {
 
     private:
-
-        /**
-         * Database handle
-         */
-        sqlite3* database;
 
         /**
          * Indicate whether all commited should be logged
@@ -32,27 +25,17 @@ class PersonApplication {
 
     public:
 
+		/**
+		 * Constructor
+		 */
+		PersonApplication();
+
         /**
-         * Store a balance transfer
+         * Store the transfer data
          * 
          * @param event The event that contains the transfer
          */
-        void storeBalanceTransfer(const protocol::Event *event) ;
-
-        /**
-         * Return the user balance
-         * 
-         * @param identifier Identifier of the user
-         */
-        int32_t getUserBalance(const std::string identifier);
-
-        /**
-         * Returns the user balance history
-         * 
-         * @param identifier
-         * @param history
-         */
-        void getUserBalanceHistory(const std::string identifier, std::vector<message::BalanceTransfer> &history);
+        void storeTransferData(const protocol::Event *event);
 
         /**
          * Log a committed event
@@ -61,18 +44,12 @@ class PersonApplication {
          */
         void writeEventToLog(const protocol::Event *event);
 
-		/**
+        /**
 		 * Constructor
 		 * 
-		 * @param databasePath Path of the database file
-         * @param logEvents Write committed events to the log
+         * @param logEvents Flag that indicates whether all events should be logged
 		 */
-		PersonApplication(const std::string databasePath, bool logEvents);
-
-		/**
-		 * Destructor
-		 */
-		~PersonApplication();
+		void setEventLogging(bool logEvents);
 };
 
 };

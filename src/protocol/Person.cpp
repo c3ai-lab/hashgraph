@@ -1,9 +1,9 @@
 #include <chrono>
-#include <thread>
 #include <unordered_map>
 #include "Person.hpp"
 #include "Event.hpp"
 #include "../utils/hashgraph_utils.hpp"
+#include "../runner/EndpointGossipRunner.hpp"
 
 namespace hashgraph {
 namespace protocol {
@@ -19,8 +19,8 @@ static std::unordered_map<std::string, Event*> findUFW(std::vector<Event*> const
 	std::unordered_map<std::string, int> b;
 
 	for (std::vector<types::Endpoint*>::iterator it = endpoints->begin(); it != endpoints->end(); ++it) {
-		v[(*it)->identifier] = NULL;
-		b[(*it)->identifier] = 0;
+		v[(*it)->getIdentifier()] = NULL;
+		b[(*it)->getIdentifier()] = 0;
 	}
 
 	for (std::size_t i = 0; i < witnesses.size(); i++) {
@@ -71,11 +71,11 @@ bool compareEventsLesser(const Event* lhs, const Event* rhs) {
 	return (lhs->getHash().compare(rhs->getHash()) < 0);
 }
 
-Person::Person(const std::string databasePath, const std::string privKeyPath, const std::string certPath, bool logEvents, std::vector<types::Endpoint*> *endpoints) : PersonNetworker(privKeyPath, certPath), PersonApplication(databasePath, logEvents), currentRound(0), endpoints(endpoints) {
+Person::Person(const std::string privKeyPath, const std::string certPath, std::vector<types::Endpoint*> *endpoints) : PersonNetworker(privKeyPath, certPath), PersonApplication(), currentRound(0), endpoints(endpoints) {
 
 	// initial event data
 	message::GossipData d;
-	d.owner 	 = identifier;
+	d.owner 	 = this->getIdentifier();
 	d.timestamp  = 0;
 	d.selfHash 	 = "\0";
 	d.gossipHash = "\0";
@@ -92,7 +92,7 @@ Person&	Person::operator=(Person const &){
 }
 
 bool Person::operator==(Person const &rhs) {
-	return this->identifier == rhs.identifier;
+	return this->getIdentifier() == rhs.getIdentifier();
 }
 
 std::vector<Event*>	Person::findWitnesses(int const &round) const {
@@ -107,23 +107,6 @@ std::vector<Event*>	Person::findWitnesses(int const &round) const {
 	return witnesses;
 }
 
-void Person::insertEvent(Event const &event) {
-	Event* p;
-	p = const_cast<Event*>(&event);
-
-	std::size_t i;
-	for (i = 0; i < hashgraph.size(); i++) {
-		if (hashgraph[i]->getRoundRecieved() != -1 && hashgraph[i]->getRoundRecieved() <= event.getRoundRecieved())
-			break;
-	}
-	while (i != hashgraph.size() && (hashgraph[i]->getRoundRecieved() == -1 || hashgraph[i]->getRoundRecieved() == event.getRoundRecieved()) && hashgraph[i]->getConsensusTimestamp() <= event.getConsensusTimestamp())
-		i++;
-	while (i != hashgraph.size() && (hashgraph[i]->getRoundRecieved() == -1 || hashgraph[i]->getRoundRecieved() == event.getRoundRecieved()) && hashgraph[i]->getConsensusTimestamp() == event.getConsensusTimestamp() && hashgraph[i]->getData().owner < hashgraph[i]->getData().owner)
-		i++;
-
-	hashgraph.insert(hashgraph.begin() + i, p);
-}
-
 int	Person::finalizeOrder(std::size_t n, int const &r, std::vector<Event*> const &w) {
 	std::vector<int64_t> s;
 	std::unordered_map<std::string, Event*> ufw;
@@ -132,12 +115,12 @@ int	Person::finalizeOrder(std::size_t n, int const &r, std::vector<Event*> const
 	ufw = findUFW(w, this->endpoints);
 
 	std::size_t j;
-	for (j = 0; j < this->endpoints->size() && (!ufw[this->endpoints->at(j)->identifier] || ufw[this->endpoints->at(j)->identifier]->ancestor(*(hashgraph[n]))); j++)
+	for (j = 0; j < this->endpoints->size() && (!ufw[this->endpoints->at(j)->getIdentifier()] || ufw[this->endpoints->at(j)->getIdentifier()]->ancestor(*(hashgraph[n]))); j++)
 		;
 	if (j == this->endpoints->size()) {
 		for (j = 0; j < this->endpoints->size(); j++) {
-			if (ufw[this->endpoints->at(j)->identifier]) {
-				tmp = ufw[this->endpoints->at(j)->identifier];
+			if (ufw[this->endpoints->at(j)->getIdentifier()]) {
+				tmp = ufw[this->endpoints->at(j)->getIdentifier()];
 				while (tmp->getSelfParent() && tmp->getSelfParent()->ancestor(*(hashgraph[n])))
 					tmp = tmp->getSelfParent();
 				s.push_back(tmp->getData().timestamp);
@@ -149,7 +132,7 @@ int	Person::finalizeOrder(std::size_t n, int const &r, std::vector<Event*> const
 		std::sort(s.begin(),s.end());
 		hashgraph[n]->setConsensusTimestamp(s[s.size() / 2]);
 		if (hashgraph[n]->getData().__isset.payload) {
-			this->storeBalanceTransfer(hashgraph[n]);
+			this->storeTransferData(hashgraph[n]); 
 		}
 		this->writeEventToLog(this->hashgraph[n]);
 
@@ -177,32 +160,6 @@ void Person::findOrder() {
 	}
 }
 
-void Person::gossip(types::Endpoint *target) {
-	
-	// sort the hashgraph
-	this->mutex.lock();
-	std::sort(hashgraph.begin(), hashgraph.end(), compareEventsGreater);
-	Event* check = getTopNode(target->identifier);
-	this->mutex.unlock();
-
-	std::unordered_map<std::string, bool> b;
-	for (std::vector<types::Endpoint*>::iterator it = this->endpoints->begin(); it != this->endpoints->end(); ++it) {
-		b[(*it)->identifier] = false;
-	}
-
-	// find an events in the hashgraph the target has not seen yet
-	std::vector<message::GossipData> gossipData;
-	for (std::size_t i = 0; i < hashgraph.size(); i++) {
-		if (!b[hashgraph[i]->getData().owner]) {
-			if (check && check->see(*(hashgraph[i])))
-				b[hashgraph[i]->getData().owner] = true;
-			gossipData.push_back(hashgraph[i]->getData());
-		}
-	}
-	
-	target->exchangeGossipData(this->identifier, gossipData);
-}
-
 Event *Person::getTopNode(std::string identifier) const {
 	Event *top = NULL;
 	int64_t t  = -1;
@@ -222,12 +179,12 @@ Event *Person::getForkNode(Person const &target) const {
 	int64_t t2  = -1;
 
 	for (std::size_t i = 0; i < hashgraph.size(); i++) {
-		if (hashgraph[i]->getData().owner == target.identifier && hashgraph[i]->getData().timestamp > t) {
+		if (hashgraph[i]->getData().owner == target.getIdentifier() && hashgraph[i]->getData().timestamp > t) {
 			t = hashgraph[i]->getData().timestamp;
 		}
 	}
 	for (std::size_t i = 0; i < hashgraph.size(); i++) {
-		if (hashgraph[i]->getData().owner == target.identifier && hashgraph[i]->getData().timestamp > t2 && hashgraph[i]->getData().timestamp != t) {
+		if (hashgraph[i]->getData().owner == target.getIdentifier() && hashgraph[i]->getData().timestamp > t2 && hashgraph[i]->getData().timestamp != t) {
 			t2 = hashgraph[i]->getData().timestamp;
 			fork = hashgraph[i];
 		}
@@ -242,9 +199,9 @@ void Person::createEvent(std::string gossiper) {
 		std::chrono::system_clock::now().time_since_epoch()).count();
 
 	message::GossipData d;
-	d.owner      = this->identifier;
+	d.owner      = this->getIdentifier();
 	d.timestamp  = timestamp;
-	d.selfHash   = (this->getTopNode(this->identifier) ? this->getTopNode(this->identifier)->getHash() : "\0");
+	d.selfHash   = (this->getTopNode(this->getIdentifier()) ? this->getTopNode(this->getIdentifier())->getHash() : "\0");
 	d.gossipHash = (this->getTopNode(gossiper) ? this->getTopNode(gossiper)->getHash() : "\0");
 	
 	// process first transfer request in queue
@@ -263,7 +220,7 @@ void Person::createEvent(std::string gossiper) {
 
 void Person::crypto_transfer(const std::string& ownerPkDer, const int32_t amount, const std::string& receiverId, const std::string& challenge, const std::string& sigDer) {
 	if (utils::verifyGossipPayload(ownerPkDer, amount, receiverId, challenge, sigDer)) {
-        std::lock_guard<std::mutex> guard(this->mutex);
+        std::lock_guard<std::mutex> guard(this->hgMutex);
 
 		message::GossipPayload p;
 		p.senderPkDer = ownerPkDer;
@@ -275,38 +232,58 @@ void Person::crypto_transfer(const std::string& ownerPkDer, const int32_t amount
 	}
 }
 
-int32_t Person::balance(const std::string& ownerId) {
-	return this->getUserBalance(ownerId); 
-}
-
-void Person::balance_history(std::vector<message::BalanceTransfer> & _return, const std::string& ownerId) {
-	return this->getUserBalanceHistory(ownerId, _return); 
-}
-
-void Person::challenge(std::string& _return) {
-	_return.assign("dummy");
-}
-
 void Person::startGossip(int interval, const std::atomic<bool> *quit) {
+    // not enough nodes
+    if (this->endpoints->size() < 2) return;
 
-	// target endpoint
-	types::Endpoint *tar;
+    // target node
+    types::Endpoint *tar;
 
 	while (!quit->load()) {
 
-		// select a random target from the list of known nodes
-		while ((tar = this->endpoints->at(std::rand() % this->endpoints->size()))->identifier == this->identifier);
+        // skip if queue is already filled
+        if (this->getManager()->pendingTaskCount() <= this->getManager()->pendingTaskCountMax()) {
 
-		// gossip to target
-		this->gossip(tar);
-		
-		// limit gossip interval
-		std::this_thread::sleep_for(std::chrono::microseconds(interval));  
+			do {
+				// select a random target from the list of known nodes
+				tar = this->endpoints->at(std::rand() % this->endpoints->size());
+			}
+			while (tar->getIdentifier() == this->getIdentifier());
+			
+			std::unordered_map<std::string, bool> b;
+            for (std::vector<types::Endpoint*>::iterator it = this->endpoints->begin(); it != this->endpoints->end(); ++it) {
+                b[(*it)->getIdentifier()] = false;
+            }
+
+            this->hgMutex.lock();
+
+            // sort the hashgraph
+            std::sort(hashgraph.begin(), hashgraph.end(), compareEventsGreater);
+            Event* check = getTopNode(tar->getIdentifier());
+
+            // find an events in the hashgraph the target has not seen yet
+            std::vector<message::GossipData> gossipData;
+            for (std::size_t i = 0; i < hashgraph.size(); i++) {
+                if (!b[hashgraph[i]->getData().owner]) {
+                    if (check && check->see(*(hashgraph[i])))
+                        b[hashgraph[i]->getData().owner] = true;
+                    gossipData.push_back(hashgraph[i]->getData());
+                }
+            }
+            
+            this->hgMutex.unlock();
+
+            // send data to remote endpoint
+            this->getManager()->add(std::make_shared<runner::EndpointGossipRunner>(tar, this->getIdentifier(), gossipData));
+        }
+
+        // limit gossip interval
+        std::this_thread::sleep_for(std::chrono::microseconds(interval));
 	}
 }
 
 void Person::receiveGossip(const std::string& gossiper, const std::vector<message::GossipData> &gossip) {
-	std::lock_guard<std::mutex> guard(this->mutex);
+	std::lock_guard<std::mutex> guard(this->hgMutex);
 
 	Event *tmp;
 	std::size_t n;	

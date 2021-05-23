@@ -6,6 +6,7 @@
 #include <string>
 #include <atomic>
 #include <queue>
+#include <mutex>
 #include <unistd.h>
 #include "PersonNetworker.hpp"
 #include "PersonApplication.hpp"
@@ -39,6 +40,11 @@ class Person : public PersonNetworker, public PersonApplication {
 		std::vector<Event*> hashgraph;
 
 		/**
+         * Protects the hashgraph vector
+         */
+		std::mutex hgMutex;
+
+		/**
          * Current round of this node
          */
 		int currentRound;
@@ -49,13 +55,6 @@ class Person : public PersonNetworker, public PersonApplication {
 		 * @param gossiper Index of the gossiper
 		 */
 		void createEvent(std::string gossiper);
-
-		/**
-		 * Collect new events from the hashgraph and gossip them to another person
-		 *
-		 * @param target Target endpoint to gossip
-		 */
-		void gossip(types::Endpoint *target);
 
 		/**
 		 * Get the most recent event in the hashgraph that was created by the person with the given index
@@ -81,13 +80,11 @@ class Person : public PersonNetworker, public PersonApplication {
 		/**
 		 * Constructor
 		 * 
-		 * @param databasePath Path of the database file
 		 * @param privKeyPath Path of the private key file
 		 * @param certPath Path of the certificate file
-		 * @param logEvents Write committed events to the log
 		 * @param endpoints Vector of hashgraph endpoints
 		 */
-		Person(const std::string databasePath, const std::string privKeyPath, const std::string certPath, bool logEvents, std::vector<types::Endpoint*> *endpoints);
+		Person(const std::string privKeyPath, const std::string certPath, std::vector<types::Endpoint*> *endpoints);
 
 		/**
 		 * Destructor
@@ -135,13 +132,6 @@ class Person : public PersonNetworker, public PersonApplication {
 		void linkEvents(std::vector<Event*> const &nEvents);
 
 		/**
-		 * Add a new event to the hashgraph
-		 * 
-		 * @param event Event to add
-		 */
-		void insertEvent(Event const &event);
-
-		/**
 		 * Find all witnisses of the given round
 		 *
 		 * @param round Round to check against
@@ -155,6 +145,23 @@ class Person : public PersonNetworker, public PersonApplication {
 		 * @param quit Flag that indicates when to stop
 		 */ 
 		void startGossip(int interval, const std::atomic<bool> *quit);
+
+		/**
+		 * Gets the current round
+		 * 
+		 * @return The current round
+		 */
+		int getCurRound() const;
+
+		/**
+		 * Increase the current round
+		 */
+		void incCurRound();
+
+		/**
+		 * Remove outdated and insignificant events from the hashgraph
+		 */
+		void removeOldBalls();
 
 		/**
 		 * Handle incoming gossip data
@@ -175,44 +182,6 @@ class Person : public PersonNetworker, public PersonApplication {
          */
 		void crypto_transfer(const std::string& ownerPkDer, const int32_t amount, const std::string& receiverId, const std::string& challenge, const std::string& sigDer);
 
-        /**
-         * Returns the user balance
-         * 
-         * @param ownerId
-         */
-		int32_t balance(const std::string& ownerId);
-
-       /**
-         * Returns the user balance history
-         * 
-         * @param _return
-         * @param ownerId
-         */
-        void balance_history(std::vector<message::BalanceTransfer> & _return, const std::string& ownerId);
-
-        /**
-         * Generates a challenge
-         * 
-         * @param _return
-         */
-        void challenge(std::string& _return);
-
-		/**
-		 * Gets the current round
-		 * 
-		 * @return The current round
-		 */
-		int getCurRound() const;
-
-		/**
-		 * Increase the current round
-		 */
-		void incCurRound();
-
-		/**
-		 * Remove outdated and insignificant events from the hashgraph
-		 */
-		void removeOldBalls();
 
 };
 

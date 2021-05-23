@@ -198,7 +198,7 @@ bool Event::stronglySee(Event const &y, std::vector<types::Endpoint*> *endpoints
 
 	std::unordered_map<std::string, bool> found;
 	for (std::vector<types::Endpoint*>::iterator it = endpoints->begin(); it != endpoints->end(); ++it) {
-		found[(*it)->identifier] = false;
+		found[(*it)->getIdentifier()] = false;
 	}
 
 	for (std::size_t n = 0; n < graph.size(); n++) {

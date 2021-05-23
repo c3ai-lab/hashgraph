@@ -24,6 +24,7 @@ add_executable(hashgraph
     src/message/hashgraph_types.cpp
     src/protocol/Event.cpp
     src/protocol/Person.cpp
+    src/protocol/SuperPerson.cpp
     src/protocol/PersonNetworker.cpp
     src/protocol/PersonApplication.cpp
     src/types/Endpoint.cpp
@@ -31,7 +32,7 @@ add_executable(hashgraph
     src/utils/sqlite.cpp
     src/utils/ecdsa.cpp
     src/utils/encoding.cpp
-    src/utils/payload.cpp
+    src/utils/payload.cpp 
 )
 
 # hashgraph dependencies

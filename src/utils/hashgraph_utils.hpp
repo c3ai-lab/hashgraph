@@ -98,43 +98,36 @@ std::string getIdentifierFromPrivatePEM(const std::string pem);
 std::string getIdentifierFromCertPEM(const std::string pem);
 
 /**
- * Create a database connection and initialize the required tables
+ * Create nessessary database tables
  *
  * @param databasePath Path of the sqlite file
  */
-sqlite3* prepareDatabase(std::string databasePath);
+void createDatabaseTables(const std::string databasePath);
 
 /**
- * Close the database connection
+ * Store the transfer data
  *
- * @param db The database connection object
- */
-void closeDatabase(sqlite3 *db);
-
-/**
- * Stores a balance transfer
- *
- * @param db
+ * @param databasePath
  * @param sender
  * @param receiver
  * @param amount
  * @param timestamp
  */
-void storeBalanceTransfer(sqlite3 *db, std::string sender, std::string receiver, int amount, int64_t timestamp);
+void storeTransferData(const std::string databasePath, const std::string sender, const std::string receiver, int amount, int64_t timestamp);
 
 /**
  * Return the balance history
  *
- * @param db
+ * @param databasePath
  * @param identifier
  * @param history
  */
-void getTransferHistory(sqlite3 *db, std::string identifier, std::vector<message::BalanceTransfer> &history);
+void getTransferHistory(const std::string databasePath, const std::string identifier, std::vector<message::BalanceTransfer> &history);
 
 /**
  * Write to log
  *
- * @param db
+ * @param databasePath
  * @param owner
  * @param round
  * @param time
@@ -143,7 +136,7 @@ void getTransferHistory(sqlite3 *db, std::string identifier, std::vector<message
  * @param gossipHash
  * @param payload
  */
-void writeToLog(sqlite3 *db, std::string owner, int round, int64_t time, int64_t cnsTime, std::string selfHash, std::string gossipHash, std::string payload);
+void writeToLog(const std::string databasePath, const std::string owner, int round, int64_t time, int64_t cnsTime, const std::string selfHash, const std::string gossipHash, const std::string payload);
 
 /**
  * Verifies gossip data

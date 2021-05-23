@@ -6,9 +6,9 @@
 #include <algorithm>
 #include <memory>
 #include <thread>
-#include <mutex>
 #include <cstdint>
-#include <thrift/server/TThreadedServer.h>
+#include <thrift/server/TThreadPoolServer.h>
+#include "SuperPerson.hpp"
 #include "../types/Endpoint.hpp"
 #include "../message/Hashgraph.h"
 
@@ -20,38 +20,24 @@ namespace protocol {
 /**
  * PersonNetworker
  */
-class PersonNetworker : virtual public message::HashgraphIf {
+class PersonNetworker : virtual public SuperPerson, virtual public message::HashgraphIf {
 
     private:
 
         /**
-         * Required to solve a race condition
+         * Required to resolve a race condition
          */
         bool force_close;
 
         /**
-         * Server
+         * Thread pool based server
          */
-        std::shared_ptr<TThreadedServer> server;
+        std::shared_ptr<TThreadPoolServer> server;
 
         /**
-         * Server thread
+         * Listener thread for new connections
          */
         std::shared_ptr<std::thread> thread;
-
-        /**
-         * Server starter function
-         * 
-         * @param ctx This context
-         */
-        static void *serverStarter(PersonNetworker *ctx, int port);   
-
-    public:
-
-        /**
-         * Public identifier
-         */
-        std::string identifier;
 
         /**
          * Private key in PEM format
@@ -64,14 +50,22 @@ class PersonNetworker : virtual public message::HashgraphIf {
 		std::string certifficatePEM;
 
         /**
-         * Mutex for shared resources
+         * Server starter function
+         * 
+         * @param ctx This context
+         * @param port Port under which the server is accessable
          */
-        std::mutex mutex;
+        static void *serverStarter(PersonNetworker *ctx, int port);   
+
+    public:
 
         /**
          * Constructor
+         * 
+         * @param privKeyPath
+         * @param certPath
          */
-        PersonNetworker(const std::string privKeyPat, const std::string certPath);
+        PersonNetworker(const std::string privKeyPath, const std::string certPath);
 
         /**
          * Destructor
@@ -80,8 +74,32 @@ class PersonNetworker : virtual public message::HashgraphIf {
 
         /**
          * Start the server for incoming messages
+         * 
+         * @param port Port under which the server is accessable
          */
         void startServer(int port);
+
+        /**
+         * Generates a challenge
+         * 
+         * @param _return
+         */
+        void challenge(std::string& _return);
+
+        /**
+         * Returns the user balance
+         * 
+         * @param ownerId
+         */
+        int32_t balance(const std::string& ownerId);
+
+        /**
+         * Returns the user balance history
+         * 
+         * @param _return
+         * @param ownerId
+         */
+        void balance_history(std::vector<message::BalanceTransfer> & _return, const std::string& ownerId);
 
         /**
 		 * Receives a gossip from another node
@@ -101,28 +119,6 @@ class PersonNetworker : virtual public message::HashgraphIf {
          * @param sigDer
          */
         virtual void crypto_transfer(const std::string& ownerPkDer, const int32_t amount, const std::string& receiverId, const std::string& challenge, const std::string& sigDer) = 0;
-
-        /**
-         * Returns the user balance
-         * 
-         * @param ownerId
-         */
-        virtual int32_t balance(const std::string& ownerId) = 0;
-
-        /**
-         * Returns the user balance history
-         * 
-         * @param _return
-         * @param ownerId
-         */
-        virtual void balance_history(std::vector<message::BalanceTransfer> & _return, const std::string& ownerId) = 0;
-
-        /**
-         * Generates a challenge
-         * 
-         * @param _return
-         */
-        virtual void challenge(std::string& _return) = 0;
 };
 
 };

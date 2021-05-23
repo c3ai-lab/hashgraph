@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include <mutex>
 #include "../message/Hashgraph.h"
 
 namespace hashgraph {
@@ -16,16 +17,21 @@ class Endpoint {
     private:
 
         /**
+         * Unique identifier of the node
+         */
+		std::string identifier;
+
+        /**
+         * Limits access to gossiping client
+         */
+        std::mutex gspMutex;
+
+        /**
          * Client to communicate
          */
         std::unique_ptr<message::HashgraphClient> client;
 
 	public:
-
-        /**
-         * Unique identifier of the node
-         */
-		std::string identifier;
 
         /**
          * Constructor
@@ -43,7 +49,12 @@ class Endpoint {
          * @param senderId
          * @param gossipData
          */
-        bool exchangeGossipData(const std::string senderId, const std::vector<message::GossipData> &gossipData);
+        void exchangeGossipData(const std::string senderId, const std::vector<message::GossipData> &gossipData);
+
+        /**
+         * Return the nodes' identifier
+         */
+		std::string getIdentifier() const;
 };
 
 };

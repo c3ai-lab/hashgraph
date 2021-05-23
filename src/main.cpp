@@ -51,16 +51,17 @@ int main(int argc, char** argv) {
 
 	// local hashgraph node
 	hashgraph::protocol::Person person(
-		config["databasePath"].as<std::string>(),
 		config["keyPath"].as<std::string>(), 
 		config["certPath"].as<std::string>(), 
-		config["logEvents"].as<bool>(),
 		&endpoints
 	);
 
+	// initialize database
+	person.initDatabase(config["databasePath"].as<std::string>());
+	// enable/disable event logging
+	person.setEventLogging(config["logEvents"].as<bool>());
 	// start server process
 	person.startServer(config["port"].as<int>());
-
 	// start gossiping to other nodes
 	person.startGossip(config["interval"].as<int>(), &quit);
 
