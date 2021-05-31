@@ -23,16 +23,6 @@ Event::Event(Person &p, message::GossipData const &data) :
 Event::~Event() {
 }
 
-bool Event::isPayloadValid() {
-	return !this->getData().__isset.payload || utils::verifyGossipPayload(
-		this->getData().payload.senderPkDer,
-		this->getData().payload.amount,
-		this->getData().payload.receiverId,
-		this->getData().payload.challenge,
-		this->getData().payload.sigDer
-	);
-}
-
 std::string Event::makeHash() {
 	std::ostringstream s;
 	s << *this;

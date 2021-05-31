@@ -35,9 +35,9 @@ const std::string SHA3(const std::string data);
 /**
  * Encodes the public identifier from a DER encoded public key
  *
- * @param data The string to hash
+ * @param pkDer DER encoded public key
  */
-const std::string encodeIdentifier(const std::string pubKeyDER);
+const std::string encodeIdentifier(const std::string pkDer);
 
 /**
  * Decodes a hex string to a byte string
@@ -56,11 +56,11 @@ const std::string byteToHex(const std::string bytes);
 /**
  * Verifies a ECDSA signature
  *
- * @param pubKeyDER A byte string of the DER encoded public key
- * @param sigDER A byte string of the DER encoded signature
+ * @param pkDer A byte string of the DER encoded public key
+ * @param sigDer A byte string of the DER encoded signature
  * @param msg The message to verify
  */
-bool verifyECDSASignature(const std::string pubKeyDER, const std::string sigDER, const std::string msg);
+bool verifyECDSASignature(const std::string pkDer, const std::string sigDer, const std::string msg);
 
 /**
  * Get an EC private key object from the given PEM
@@ -108,12 +108,14 @@ void createDatabaseTables(const std::string databasePath);
  * Store the transfer data
  *
  * @param databasePath
- * @param sender
- * @param receiver
+ * @param senderId
+ * @param receiverId
+ * @param pkDer
+ * @param sigDer
  * @param amount
  * @param timestamp
  */
-void storeTransferData(const std::string databasePath, const std::string sender, const std::string receiver, int amount, int64_t timestamp);
+void storeTransferData(const std::string databasePath, const std::string senderId, const std::string receiverId, const std::string pkDer, const std::string sigDer, int32_t amount, int64_t timestamp);
 
 /**
  * Return the balance history

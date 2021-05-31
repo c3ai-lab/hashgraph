@@ -7,8 +7,10 @@ namespace cpp hashgraph.message
 struct BalanceTransfer {
     1:string senderId;
     2:string receiverId;
-    3:i32    amount;
-    4:i64    timestamp;
+    3:string pkDer;
+    4:string sigDer;
+    5:i32    amount;
+    6:i64    timestamp;
 }
 
 ///////////////////////////////////////////////////////////

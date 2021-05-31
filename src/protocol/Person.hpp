@@ -80,11 +80,11 @@ class Person : public PersonNetworker, public PersonApplication {
 		/**
 		 * Constructor
 		 * 
-		 * @param privKeyPath Path of the private key file
+		 * @param skPath Path of the secret key file
 		 * @param certPath Path of the certificate file
 		 * @param endpoints Vector of hashgraph endpoints
 		 */
-		Person(const std::string privKeyPath, const std::string certPath, std::vector<types::Endpoint*> *endpoints);
+		Person(const std::string skPath, const std::string certPath, std::vector<types::Endpoint*> *endpoints);
 
 		/**
 		 * Destructor
@@ -169,7 +169,7 @@ class Person : public PersonNetworker, public PersonApplication {
 		 * @param gossiper Creator identifier of the gossip data
 		 * @param gossip Gossip data vector
 		 */
-		void receiveGossip(const std::string& gossiper, const std::vector<message::GossipData> &gossip);
+		void receiveGossip(const std::string &gossiper, const std::vector<message::GossipData> &gossip);
 
         /**
          * Transfer request from a user
@@ -180,7 +180,7 @@ class Person : public PersonNetworker, public PersonApplication {
          * @param challenge
          * @param sigDer
          */
-		void crypto_transfer(const std::string& ownerPkDer, const int32_t amount, const std::string& receiverId, const std::string& challenge, const std::string& sigDer);
+		void crypto_transfer(const std::string &ownerPkDer, const int32_t amount, const std::string &receiverId, const std::string &challenge, const std::string &sigDer);
 
 
 };

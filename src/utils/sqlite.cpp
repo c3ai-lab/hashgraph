@@ -1,4 +1,3 @@
-#include <sstream>
 #include <string>
 #include <cstdint>
 #include <vector>
@@ -12,7 +11,6 @@ namespace utils {
 void createDatabaseTables(const std::string databasePath) {
     
     sqlite3 *db;
-    std::stringstream sql;
 
     // open database
     if (sqlite3_open_v2(databasePath.c_str(), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL) != SQLITE_OK) {
@@ -26,34 +24,35 @@ void createDatabaseTables(const std::string databasePath) {
     sqlite3_exec(db, "PRAGMA busy_timeout = 30000;", NULL, NULL, NULL);
 
     // create database tables
-    sql << "CREATE TABLE IF NOT EXISTS Log ( ";
-    sql << " id         INTEGER       PRIMARY KEY ";
-    sql << "                          NOT NULL, ";
-    sql << " owner      VARCHAR (100) NOT NULL, ";
-    sql << " round      INTEGER       NOT NULL, ";
-    sql << " time       INTEGER       NOT NULL, ";
-    sql << " cnsTime    INTEGER       NOT NULL, ";
-    sql << " selfHash   VARCHAR (100) NOT NULL, ";
-    sql << " gossipHash VARCHAR (100) NOT NULL, ";
-    sql << " payload    VARCHAR (100)); ";
+    sqlite3_exec(db, 
+        "CREATE TABLE IF NOT EXISTS Log ( "
+        " id         INTEGER       PRIMARY KEY "
+        "                          NOT NULL, "
+        " owner      VARCHAR (100) NOT NULL, "
+        " round      INTEGER       NOT NULL, "
+        " time       INTEGER       NOT NULL, "
+        " cnsTime    INTEGER       NOT NULL, "
+        " selfHash   VARCHAR (100) NOT NULL, "
+        " gossipHash VARCHAR (100) NOT NULL, "
+        " payload    BLOB);"
 
-    sql << "CREATE TABLE IF NOT EXISTS User ( ";
-    sql << "id         INTEGER       PRIMARY KEY ";
-    sql << "                         NOT NULL, ";
-    sql << "identifier VARCHAR (100) NOT NULL ";
-    sql << "                         UNIQUE ON CONFLICT IGNORE); ";
+        "CREATE TABLE IF NOT EXISTS User ( "
+        "id         INTEGER       PRIMARY KEY "
+        "                         NOT NULL, "
+        "identifier VARCHAR (100) NOT NULL "
+        "                         UNIQUE ON CONFLICT IGNORE, "
+        "pkDer      BLOB          UNIQUE ON CONFLICT IGNORE);"
 
-    sql << "CREATE TABLE IF NOT EXISTS Transfer ( ";
-    sql << "id        INTEGER PRIMARY KEY ";
-    sql << "                  NOT NULL, ";
-    sql << "sender    INTEGER REFERENCES User (id) ";
-    sql << "                  NOT NULL, ";
-    sql << "receiver  INTEGER REFERENCES User (id) ";
-    sql << "                  NOT NULL, ";
-    sql << "amount    INTEGER NOT NULL, ";
-    sql << "timestamp INTEGER NOT NULL); ";
-
-    sqlite3_exec(db, sql.str().c_str(), NULL, NULL, NULL);
+        "CREATE TABLE IF NOT EXISTS Transfer ( "
+        "id        INTEGER PRIMARY KEY "
+        "                  NOT NULL, "
+        "sId       INTEGER REFERENCES User (id) "
+        "                  NOT NULL, "
+        "rId       INTEGER REFERENCES User (id) "
+        "                  NOT NULL, "
+        "sigDer    BLOB    NOT NULL, "
+        "amount    INTEGER NOT NULL, "
+        "timestamp INTEGER NOT NULL);", NULL, NULL, NULL);
     
     // close database
     if (sqlite3_close(db) != SQLITE_OK) {
@@ -61,11 +60,10 @@ void createDatabaseTables(const std::string databasePath) {
     }
 }
 
-void storeTransferData(const std::string databasePath, const std::string sender, const std::string receiver, int amount, int64_t timestamp) {
+void storeTransferData(const std::string databasePath, const std::string senderId, const std::string receiverId, const std::string pkDer, const std::string sigDer, int32_t amount, int64_t timestamp) {
 
     sqlite3 *db;
     sqlite3_stmt* stmt;
-    std::stringstream sql;
 
     // open database
     if (sqlite3_open_v2(databasePath.c_str(), &db, SQLITE_OPEN_READWRITE, NULL) != SQLITE_OK) {
@@ -79,33 +77,60 @@ void storeTransferData(const std::string databasePath, const std::string sender,
     sqlite3_exec(db, "PRAGMA busy_timeout = 30000;", NULL, NULL, NULL);
 
     // start transaction
-    sqlite3_exec(db, "BEGIN TRANSACTION; ", NULL, NULL, NULL);
+    sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
 
-    // insert sender if not existent
-    sql << "INSERT INTO User (identifier) VALUES ('" << sender << "'); ";
-    sqlite3_exec(db, sql.str().c_str(), NULL, NULL, NULL);
-    sql.str("");
-    sql.clear();
+    // insert sender and receiver if not existent
+    if (sqlite3_prepare_v2(db, "INSERT INTO User (identifier) VALUES (?);", -1, &stmt, 0) != SQLITE_OK) {
+        printf("SQL error: %s \n", sqlite3_errmsg(db));
+    }
 
-    // insert receiver if not existent
-    sql << "INSERT INTO User (identifier) VALUES ('" << receiver << "'); ";
-    sqlite3_exec(db, sql.str().c_str(), NULL, NULL, NULL);
-    sql.str("");
-    sql.clear();
+    sqlite3_bind_text(stmt, 1, receiverId.c_str(), -1, SQLITE_TRANSIENT);
 
-    // insert transfer
-    sql << "INSERT INTO Transfer (sender, receiver, amount, timestamp) VALUES ( ";
-    sql << "(SELECT id FROM User WHERE identifier = ?), (SELECT id FROM User WHERE identifier = ?),  ?,  ?); ";
+    if (sqlite3_step(stmt) != SQLITE_DONE){
+        printf("SQL error: %s \n", sqlite3_errmsg(db));
+    }
 
-    if (sqlite3_prepare_v2(db, sql.str().c_str(), -1, &stmt, 0) != SQLITE_OK) {
+    sqlite3_reset(stmt);
+    
+    sqlite3_bind_text(stmt, 1, senderId.c_str(), -1, SQLITE_TRANSIENT);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE){
+        printf("SQL error: %s \n", sqlite3_errmsg(db));
+    }
+
+    if (sqlite3_finalize(stmt) != SQLITE_OK) {
+        printf("SQL error: %s \n", sqlite3_errmsg(db));
+    }
+
+    // update sender public key
+    if (sqlite3_prepare_v2(db, "UPDATE User SET pkDer = ? WHERE identifier = ?;", -1, &stmt, 0) != SQLITE_OK) {
+        printf("SQL error: %s \n", sqlite3_errmsg(db));
+    }
+
+    sqlite3_bind_blob(stmt, 1, pkDer.c_str(), pkDer.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, senderId.c_str(), -1, SQLITE_TRANSIENT);  
+
+    if (sqlite3_step(stmt) != SQLITE_DONE){
+        printf("SQL error: %s \n", sqlite3_errmsg(db));
+    }
+
+    if (sqlite3_finalize(stmt) != SQLITE_OK) {
+        printf("SQL error: %s \n", sqlite3_errmsg(db));
+    }
+
+    // insert transfer request
+    if (sqlite3_prepare_v2(db, 
+        "INSERT INTO Transfer (sId, rId, sigDer, amount, timestamp) "
+        "VALUES ((SELECT id FROM User WHERE identifier = ?), (SELECT id FROM User WHERE identifier = ?),  ?,  ?, ?);", -1, &stmt, 0) != SQLITE_OK) {
         printf("SQL error: %s \n", sqlite3_errmsg(db));
     }
 
     // https://stackoverflow.com/questions/16043734/sqlite3-bind-text-sqlite-static-vs-sqlite-transient-for-c-string
-    sqlite3_bind_text(stmt, 1, sender.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, receiver.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 3, amount);
-    sqlite3_bind_int64(stmt, 4, timestamp);
+    sqlite3_bind_text(stmt, 1, senderId.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, receiverId.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_blob(stmt, 3, sigDer.c_str(), sigDer.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 4, amount);
+    sqlite3_bind_int64(stmt, 5, timestamp);
 
     if (sqlite3_step(stmt) != SQLITE_DONE){
         printf("SQL error: %s \n", sqlite3_errmsg(db));
@@ -116,7 +141,7 @@ void storeTransferData(const std::string databasePath, const std::string sender,
     }
 
     // end transaction
-    sqlite3_exec(db, "END TRANSACTION; ", NULL, NULL, NULL);
+    sqlite3_exec(db, "END TRANSACTION;", NULL, NULL, NULL);
 
     // close database
     if (sqlite3_close(db) != SQLITE_OK) {
@@ -128,7 +153,6 @@ void getTransferHistory(const std::string databasePath, const std::string identi
 
     sqlite3 *db;
     sqlite3_stmt* stmt;
-    std::stringstream sql;
     int rc;
 
     // open database
@@ -143,12 +167,11 @@ void getTransferHistory(const std::string databasePath, const std::string identi
     sqlite3_exec(db, "PRAGMA busy_timeout = 30000;", NULL, NULL, NULL);
 
     // build transfers history
-    sql << "SELECT su.identifier, ru.identifier, t.amount, t.timestamp FROM Transfer AS t ";
-    sql << "LEFT JOIN User AS su ON t.sender = su.id ";
-    sql << "LEFT JOIN User AS ru ON t.receiver = ru.id ";
-    sql << "WHERE su.identifier = ? OR ru.identifier = ? ";
-
-    if (sqlite3_prepare_v2(db, sql.str().c_str(), -1, &stmt, 0) != SQLITE_OK) {
+    if (sqlite3_prepare_v2(db, 
+        "SELECT su.identifier, ru.identifier, su.pkDer, t.sigDer, t.amount, t.timestamp FROM Transfer AS t "
+        "LEFT JOIN User AS su ON t.sId = su.id "
+        "LEFT JOIN User AS ru ON t.rId = ru.id "
+        "WHERE su.identifier = ? OR ru.identifier = ?;", -1, &stmt, 0) != SQLITE_OK) {
         printf("SQL error: %s \n", sqlite3_errmsg(db));
     }
         
@@ -165,10 +188,12 @@ void getTransferHistory(const std::string databasePath, const std::string identi
             case SQLITE_ROW: {
             
                 message::BalanceTransfer bt;
-                bt.senderId   = (char*)sqlite3_column_text(stmt, 0);
-                bt.receiverId = (char*)sqlite3_column_text(stmt, 1);
-                bt.amount     = sqlite3_column_int(stmt, 2);
-                bt.timestamp  = sqlite3_column_int64(stmt, 3);
+                bt.senderId.assign((char*)sqlite3_column_text(stmt, 0));
+                bt.receiverId.assign((char*)sqlite3_column_text(stmt, 1));
+                bt.pkDer.assign((char*)sqlite3_column_blob(stmt, 2), sqlite3_column_bytes(stmt, 2));
+                bt.sigDer.assign((char*)sqlite3_column_blob(stmt, 3), sqlite3_column_bytes(stmt, 3));
+                bt.amount = sqlite3_column_int(stmt, 4);
+                bt.timestamp = sqlite3_column_int64(stmt, 5);
                 history.push_back(bt);
             }
             break;
@@ -191,7 +216,6 @@ void writeToLog(const std::string databasePath, const std::string owner, int rou
 
     sqlite3 *db;
     sqlite3_stmt* stmt;
-    std::stringstream sql;
 
     // open database
     if (sqlite3_open_v2(databasePath.c_str(), &db, SQLITE_OPEN_READWRITE, NULL) != SQLITE_OK) {
@@ -205,18 +229,19 @@ void writeToLog(const std::string databasePath, const std::string owner, int rou
     sqlite3_exec(db, "PRAGMA busy_timeout = 30000;", NULL, NULL, NULL);
 
     // log sql query
-    sql << "INSERT INTO Log (owner, round, time, cnsTime, selfHash, gossipHash, payload) VALUES (?, ?, ?, ?, ?, ?, ?)";
-    if (sqlite3_prepare_v2(db, sql.str().c_str(), -1, &stmt, 0) != SQLITE_OK) {
+    if (sqlite3_prepare_v2(db, 
+        "INSERT INTO Log (owner, round, time, cnsTime, selfHash, gossipHash, payload) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?);", -1, &stmt, 0) != SQLITE_OK) {
         printf("SQL error: %s \n", sqlite3_errmsg(db));
     }
-        
+
     sqlite3_bind_text(stmt, 1, owner.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, round);
     sqlite3_bind_int64(stmt, 3, time);
     sqlite3_bind_int64(stmt, 4, cnsTime);
     sqlite3_bind_text(stmt, 5, selfHash.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 6, gossipHash.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 7, payload.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_blob(stmt, 7, payload.c_str(), payload.length(), SQLITE_TRANSIENT);
 
     if (sqlite3_step(stmt) != SQLITE_DONE){
         printf("SQL error: %s \n", sqlite3_errmsg(db));

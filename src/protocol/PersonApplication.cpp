@@ -19,8 +19,9 @@ void PersonApplication::setEventLogging(bool logEvents) {
 void PersonApplication::storeTransferData(const protocol::Event *event) {
     this->getManager()->add(std::make_shared<runner::SQLiteTransferRunner>(
 		this->getDatabasePath(),
-        utils::encodeIdentifier(event->getData().payload.senderPkDer),
         event->getData().payload.receiverId,
+        event->getData().payload.senderPkDer,
+        event->getData().payload.sigDer,
         event->getData().payload.amount, 
         event->getConsensusTimestamp()
     ));

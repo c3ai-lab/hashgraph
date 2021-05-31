@@ -19,7 +19,7 @@ class Event;
  */
 class SuperPerson {
 
-	private:
+    private:
 
         /**
          * Public identifier of the node
@@ -29,26 +29,26 @@ class SuperPerson {
         /**
          * Thread pool manager
          */
-		std::shared_ptr<ThreadManager> manager;
+        std::shared_ptr<ThreadManager> manager;
 
         /**
          * SQLite database path
          */
         std::string databasePath;
-	
-	protected:
+
+    protected:
 
         /**
          * Return the database path
          */
-		std::string getDatabasePath() const;
+        std::string getDatabasePath() const;
 
         /**
          * Set the nodes' identifier
          */
         void setIdentifier(const std::string identifier);
 
-	public:
+    public:
 
         /**
          * Constructor
@@ -75,7 +75,7 @@ class SuperPerson {
         /**
          * Return the nodes' identifier
          */
-		std::string getIdentifier() const;
+        std::string getIdentifier() const;
 };
 
 };

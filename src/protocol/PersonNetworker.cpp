@@ -1,4 +1,3 @@
-
 #include <fstream>
 #include <streambuf>
 #include <thrift/transport/TSSLSocket.h>
@@ -16,19 +15,16 @@ using namespace apache::thrift::transport;
 namespace hashgraph {
 namespace protocol {
 
-PersonNetworker::PersonNetworker(const std::string privKeyPath, const std::string certPath) : 
+PersonNetworker::PersonNetworker(const std::string skPath, const std::string certPath) : 
     force_close(false) {
 
     // read private key from disk
-    std::ifstream privKey(privKeyPath);
-    this->privKeyPEM.assign(std::istreambuf_iterator<char>(privKey), std::istreambuf_iterator<char>());
+    std::ifstream sk(skPath);
+    this->skPEM.assign(std::istreambuf_iterator<char>(sk), std::istreambuf_iterator<char>());
     
     // read certificate from disk
     std::ifstream cert(certPath);
-    this->certifficatePEM.assign(std::istreambuf_iterator<char>(cert), std::istreambuf_iterator<char>());
-
-    // calculate identifier
-    this->setIdentifier(utils::getIdentifierFromPrivatePEM(this->privKeyPEM));
+    this->certPEM.assign(std::istreambuf_iterator<char>(cert), std::istreambuf_iterator<char>());
 }
 
 PersonNetworker::~PersonNetworker() {
@@ -55,16 +51,20 @@ void *PersonNetworker::serverStarter(PersonNetworker* ctx, int port) {
 
     // ssl transport setup
     std::shared_ptr<TSSLSocketFactory> sslSocketFactory(new TSSLSocketFactory(SSLProtocol::TLSv1_2));
-    sslSocketFactory->loadCertificateFromBuffer(ctx->certifficatePEM.c_str());
-    sslSocketFactory->loadPrivateKeyFromBuffer(ctx->privKeyPEM.c_str());
+    sslSocketFactory->loadCertificateFromBuffer(ctx->certPEM.c_str());
+    sslSocketFactory->loadPrivateKeyFromBuffer(ctx->skPEM.c_str());
     sslSocketFactory->authenticate(false);
 
+    // server socket setup
+    TSSLServerSocket *socket = new TSSLServerSocket(port, 30000, 30000, sslSocketFactory);
+    socket->setKeepAlive(false);
+
     // server transport setup
-    std::shared_ptr<TServerTransport> transport(new TSSLServerSocket(port, 30000, 30000, sslSocketFactory));
+    std::shared_ptr<TServerTransport> transport(socket);
 
     // create server
     ctx->server = std::make_shared<TThreadPoolServer>(processor, transport, transportFactory, protocolFactory, ctx->getManager());
-    
+
     // listen for incoming messages
     ctx->server->serve();
 
@@ -81,10 +81,15 @@ int32_t PersonNetworker::balance(const std::string& ownerId) {
     std::vector<message::BalanceTransfer> history;
     utils::getTransferHistory(this->getDatabasePath(), ownerId, history);
 
+    std::string chlng;
+    this->challenge(chlng);
+
     int32_t amount = 0;
     for(std::vector<message::BalanceTransfer>::iterator it = history.begin(); it != history.end(); ++it) {
-        if (it->senderId   == ownerId) amount -= it->amount;
-        if (it->receiverId == ownerId) amount += it->amount;
+        if (utils::verifyGossipPayload(it->pkDer, it->amount, it->receiverId, chlng, it->sigDer)) {
+            if (it->senderId   == ownerId) amount -= it->amount;
+            if (it->receiverId == ownerId) amount += it->amount;
+        }
     }
     return amount;
 }

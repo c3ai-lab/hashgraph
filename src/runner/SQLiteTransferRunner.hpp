@@ -16,51 +16,62 @@ namespace runner {
  */
 class SQLiteTransferRunner : public Runnable {
 
-	private:
+    private:
 
-		/**
-		 * Path of the database file
-		 */
-		const std::string dbPath;
+        /**
+         * Path of the database file
+         */
+        const std::string dbPath;
 
-		/**
-		 * Transfer sender
-		 */
-		const std::string sender;
+        /**
+         * Transfer receiver
+         */
+        const std::string receiver;
 
-		/**
-		 * Transfer receiver
-		 */
-		const std::string receiver;
+        /**
+         * Byte string of the DER encoded public key
+         */
+        const std::string pkDer;
 
-		/**
-		 * Transfer amount
-		 */
-		const int amount;
+        /**
+         * Byte string of the DER encoded signature
+         */
+        const std::string sigDer;
 
-		/**
-		 * Transfer time
-		 */
-		const int64_t timestamp;
+        /**
+         * Transfer amount
+         */
+        const int amount;
 
-	public:
+        /**
+         * Transfer time
+         */
+        const int64_t timestamp;
 
-		/**
-		 * Constructor
-		 */
-		SQLiteTransferRunner(const std::string dbPath, const std::string sender, const std::string receiver, const int amount, const int64_t timestamp) :
-			dbPath(dbPath),
-			sender(sender),
-			receiver(receiver),
-			amount(amount),
-			timestamp(timestamp) {};
+    public:
 
-		/**
-		 * Write transfer entry to database
-		 */
-		void run() {
-			utils::storeTransferData(this->dbPath, this->sender, this->receiver, this->amount, this->timestamp);
-		}
+        /**
+         * Constructor
+         */
+        SQLiteTransferRunner(const std::string dbPath, const std::string receiver, const std::string pkDer, const std::string sigDer, const int amount, const int64_t timestamp) :
+            dbPath(dbPath),
+            receiver(receiver),
+            pkDer(pkDer),
+            sigDer(sigDer),
+            amount(amount),
+            timestamp(timestamp) {};
+
+        /**
+         * Write transfer entry to database
+         */
+        void run() {
+
+            // sender identifier from public key 
+            const std::string identifier = utils::encodeIdentifier(this->pkDer);
+
+            // write to database
+            utils::storeTransferData(this->dbPath, identifier, this->receiver, this->pkDer, this->sigDer, this->amount, this->timestamp);
+        }
 };
 
 };

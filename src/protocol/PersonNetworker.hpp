@@ -40,16 +40,6 @@ class PersonNetworker : virtual public SuperPerson, virtual public message::Hash
         std::shared_ptr<std::thread> thread;
 
         /**
-         * Private key in PEM format
-         */
-        std::string privKeyPEM;
-
-        /**
-         * Certificate in PEM format
-         */
-		std::string certifficatePEM;
-
-        /**
          * Server starter function
          * 
          * @param ctx This context
@@ -57,15 +47,27 @@ class PersonNetworker : virtual public SuperPerson, virtual public message::Hash
          */
         static void *serverStarter(PersonNetworker *ctx, int port);   
 
+    protected:
+
+        /**
+         * PEM encoded secret key
+         */
+        std::string skPEM;
+
+        /**
+         * PEM encoded certificate
+         */
+		std::string certPEM;
+
     public:
 
         /**
          * Constructor
          * 
-         * @param privKeyPath
+         * @param skPath
          * @param certPath
          */
-        PersonNetworker(const std::string privKeyPath, const std::string certPath);
+        PersonNetworker(const std::string skPath, const std::string certPath);
 
         /**
          * Destructor
@@ -118,7 +120,7 @@ class PersonNetworker : virtual public SuperPerson, virtual public message::Hash
          * @param challenge
          * @param sigDer
          */
-        virtual void crypto_transfer(const std::string& ownerPkDer, const int32_t amount, const std::string& receiverId, const std::string& challenge, const std::string& sigDer) = 0;
+        virtual void crypto_transfer(const std::string &ownerPkDer, const int32_t amount, const std::string &receiverId, const std::string &challenge, const std::string &sigDer) = 0;
 };
 
 };

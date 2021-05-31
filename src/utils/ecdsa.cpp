@@ -13,7 +13,7 @@ namespace utils {
 EC_KEY* getKeyFromPrivatePEM(const std::string pem) {
     EC_KEY *key = NULL;
 
-    BIO *bio = BIO_new_mem_buf((void*)pem.c_str(), pem.size());
+    BIO *bio = BIO_new_mem_buf((void*)pem.c_str(), pem.length());
     if (!bio) {
         std::cerr << "Error: BIO_new_mem_buf failed" << std::endl;
         return NULL;
@@ -26,7 +26,7 @@ EC_KEY* getKeyFromPrivatePEM(const std::string pem) {
 
 EC_KEY* getKeyFromCertPEM(const std::string pem) {
 
-    BIO *bio = BIO_new_mem_buf((void*)pem.c_str(), pem.size());
+    BIO *bio = BIO_new_mem_buf((void*)pem.c_str(), pem.length());
     if (!bio) {
         std::cerr << "Error: BIO_new_mem_buf failed" << std::endl;
         return NULL;
@@ -59,17 +59,17 @@ std::string encodeKeyToPublicDER(EC_KEY *key) {
 
 std::string getIdentifierFromPrivatePEM(const std::string pem) {
 
-    // get key object from pem
+    // get pk/sk-key object from pem
     EC_KEY *key = getKeyFromPrivatePEM(pem);
 
     // get DER encoding of public key
-    std::string der = encodeKeyToPublicDER(key);
+    std::string pkDer = encodeKeyToPublicDER(key);
 
     // cleanup
     EC_KEY_free(key);
 
-	// calculate identifier
-	return utils::encodeIdentifier(der);
+	// create identifier
+	return utils::encodeIdentifier(pkDer);
 }
 
 std::string getIdentifierFromCertPEM(const std::string pem) {
@@ -87,9 +87,9 @@ std::string getIdentifierFromCertPEM(const std::string pem) {
 	return utils::encodeIdentifier(der);
 }
 
-EC_KEY* getKeyFromPublicDER(const std::string pubKeyDer) {
+EC_KEY* getKeyFromPublicDER(const std::string pkDer) {
 	EC_KEY *pk = NULL;
-	BIO *bio = BIO_new_mem_buf((void*)pubKeyDer.c_str(), pubKeyDer.size());
+	BIO *bio = BIO_new_mem_buf((void*)pkDer.c_str(), pkDer.length());
 	if (!bio) {
 	   std::cerr << "Error: BIO_new_mem_buf failed" << std::endl;
 	   return NULL;
@@ -99,19 +99,19 @@ EC_KEY* getKeyFromPublicDER(const std::string pubKeyDer) {
     return pk;
 }
 
-bool verifyECDSASignature(const std::string pubKeyDER, const std::string sigDER, const std::string msg) {
+bool verifyECDSASignature(const std::string pkDer, const std::string sigDer, const std::string msg) {
 
 	// public key from der encoded byte array
-	EC_KEY* pubKey = getKeyFromPublicDER(pubKeyDER);
+	EC_KEY* pk = getKeyFromPublicDER(pkDer);
  
-	// hash transfer message
+	// hash message
 	std::string digest = utils::SHA256(msg);
 	
 	// verify signature
-   	bool valid = ECDSA_verify(0, (const unsigned char*)digest.c_str(), digest.size(), (const unsigned char*)sigDER.c_str(), sigDER.size(), pubKey) == 1;
+   	bool valid = ECDSA_verify(0, (const unsigned char*)digest.c_str(), digest.length(), (const unsigned char*)sigDer.c_str(), sigDer.length(), pk) == 1;
 
     // cleanup
-    EC_KEY_free(pubKey);
+    EC_KEY_free(pk);
 
 	return valid;
 }

@@ -18,199 +18,194 @@ class Person;
  */
 class Event {
 
-	private:
-	
-		std::vector<Event*> &graph;
-		std::unordered_set<std::string> ancestorsSeen;
-		std::unordered_set<std::string> ancestorsNotSeen;
-		std::unordered_set<std::string> hashesSeen;
-		std::unordered_set<std::string> hashesNotSeen;
-		std::string hash;
-		message::GossipData d;
-		Event *selfParent;
-		Event *gossiperParent;
-		int64_t consensusTimestamp;
-		int roundRecieved;
-		int round;
-		bool witness;
-		char famous;
+    private:
 
-		/**
-		 * Hash this event
-		 */
-		std::string makeHash();
-		
-	public:
+        std::vector<Event*> &graph;
+        std::unordered_set<std::string> ancestorsSeen;
+        std::unordered_set<std::string> ancestorsNotSeen;
+        std::unordered_set<std::string> hashesSeen;
+        std::unordered_set<std::string> hashesNotSeen;
+        std::string hash;
+        message::GossipData d;
+        Event *selfParent;
+        Event *gossiperParent;
+        int64_t consensusTimestamp;
+        int roundRecieved;
+        int round;
+        bool witness;
+        char famous;
 
-		/**
-		 * Constructor
-		 */
-		Event(Person &p, message::GossipData const &data);
+        /**
+         * Hash this event
+         */
+        std::string makeHash();
+        
+    public:
 
-		/**
-		 * Destructor
-		 */
-		~Event();
-		
-		/**
-		 * Compare the event against the given one
-		 * 
-		 * @param rhs
-		 */
-		bool operator==(Event const &rhs) const;
+        /**
+         * Constructor
+         */
+        Event(Person &p, message::GossipData const &data);
 
-		/**
-		 * Check whether this event is an ancestor of the given one
-		 * 
-		 * @param y Event to check against
-		 */
-		bool ancestor(Event const &y);
+        /**
+         * Destructor
+         */
+        ~Event();
 
-		/**
-		 * Recursively check ancestors
-		 * 
-		 * @param y
-		 * @param done
-		 * @param visited
-		 */
-		bool ancestorRecursion(Event const &y, bool &done, std::vector<Event*> &visited);
+        /**
+         * Compare the event against the given one
+         * 
+         * @param rhs
+         */
+        bool operator==(Event const &rhs) const;
 
-		/**
-		 * Checks whether the given event was already by this event
-		 * 
-		 * @param y The event to check
-		 */
-		bool see(Event const &y);
+        /**
+         * Check whether this event is an ancestor of the given one
+         * 
+         * @param y Event to check against
+         */
+        bool ancestor(Event const &y);
 
-		/**
-		 * Recursively check whether the given event was seen
-		 * 
-		 * @param y
-		 * @param forkCheck
-		 * @param done
-		 * @param visited
-		 */
-		bool seeRecursion(Event const &y, std::vector<Event*> &forkCheck, bool &done, std::vector<Event*> &visited);
+        /**
+         * Recursively check ancestors
+         * 
+         * @param y
+         * @param done
+         * @param visited
+         */
+        bool ancestorRecursion(Event const &y, bool &done, std::vector<Event*> &visited);
 
-		/**
-		 * Returns the witness
-		 */
-		bool getWitness() const;
+        /**
+         * Checks whether the given event was already by this event
+         * 
+         * @param y The event to check
+         */
+        bool see(Event const &y);
 
-		/**
-		 * Sets the famous flag
-		 * 
-		 * @param fame
-		 */
-		void setFamous(char const &fame);
+        /**
+         * Recursively check whether the given event was seen
+         * 
+         * @param y
+         * @param forkCheck
+         * @param done
+         * @param visited
+         */
+        bool seeRecursion(Event const &y, std::vector<Event*> &forkCheck, bool &done, std::vector<Event*> &visited);
 
-		/**
-		 * Sets the round received
-		 * 
-		 * @param r
-		 */
-		void setRoundReceived(int const &r);
+        /**
+         * Returns the witness
+         */
+        bool getWitness() const;
 
-		/**
-		 * Sets the consensus timestamp
-		 * 
-		 * @param t
-		 */
-		void setConsensusTimestamp(int64_t t);
-		
-		/**
-		 * Sets the self parent
-		 * 
-		 * @param e
-		 */
-		void setSelfParent(Event* const e);
+        /**
+         * Sets the famous flag
+         * 
+         * @param fame
+         */
+        void setFamous(char const &fame);
 
-		/**
-		 * Sets the gossiper parent
-		 * 
-		 * @param e
-		 */
-		void setGossiperParent(Event* const e);
+        /**
+         * Sets the round received
+         * 
+         * @param r
+         */
+        void setRoundReceived(int const &r);
 
-		/**
-		 * Returns the famous flag
-		 */
-		char getFamous() const;
+        /**
+         * Sets the consensus timestamp
+         * 
+         * @param t
+         */
+        void setConsensusTimestamp(int64_t t);
 
-		/**
-		 * Returns the round
-		 */
-		int getRound() const;
+        /**
+         * Sets the self parent
+         * 
+         * @param e
+         */
+        void setSelfParent(Event* const e);
 
-		/**
-		 * Returns the consensus timestamp
-		 */
-		int64_t getConsensusTimestamp() const;
+        /**
+         * Sets the gossiper parent
+         * 
+         * @param e
+         */
+        void setGossiperParent(Event* const e);
 
-		/**
-		 * Returns the round received
-		 */
-		int getRoundRecieved() const;
+        /**
+         * Returns the famous flag
+         */
+        char getFamous() const;
 
-		/**
-		 * Returns the self parent
-		 */
-		Event *getSelfParent() const;
+        /**
+         * Returns the round
+         */
+        int getRound() const;
 
-		/**
-		 * Returns the gossiper parent
-		 */
-		Event *getGossiperParent() const;
+        /**
+         * Returns the consensus timestamp
+         */
+        int64_t getConsensusTimestamp() const;
 
-		/**
-		 * Returns the data
-		 */
-		const message::GossipData &getData() const;
+        /**
+         * Returns the round received
+         */
+        int getRoundRecieved() const;
 
-		/**
-		 * Returns the event hash
-		 */
-		std::string getHash() const;
+        /**
+         * Returns the self parent
+         */
+        Event *getSelfParent() const;
 
-		/**
-		 * Returns the graph
-		 */
-		std::vector<Event*>	&getGraph() const;
+        /**
+         * Returns the gossiper parent
+         */
+        Event *getGossiperParent() const;
 
-		/**
-		 * Checks wether x is a fork of y
-		 * 
-		 * @param x
-		 * @param y
-		 */
-		static bool fork(Event *x, Event *y);
+        /**
+         * Returns the data
+         */
+        const message::GossipData &getData() const;
 
-		/**
-		 * Devides rounds
-		 * 
-		 * @param person
-		 */
-		void divideRounds(Person &person);
+        /**
+         * Returns the event hash
+         */
+        std::string getHash() const;
 
-		/**
-		 * Decides whether the event is famous
-		 * 
-		 * @param person
-		 */
-		void decideFame(Person &person);
+        /**
+         * Returns the graph
+         */
+        std::vector<Event*>	&getGraph() const;
 
-		/**
-		 * Checks whether the given event was seen by events from a super majority of other nodes
-		 * 
-		 * @param y Event to check against
-		 * @param endpoints List of endpoints
-		 */
-		bool stronglySee(Event const &y, std::vector<types::Endpoint*> *endpoints);
+        /**
+         * Checks wether x is a fork of y
+         * 
+         * @param x
+         * @param y
+         */
+        static bool fork(Event *x, Event *y);
 
-		/**
-		 * Verifies whether the payload data of this event is valid
-		 */
-		bool isPayloadValid();
+        /**
+         * Devides rounds
+         * 
+         * @param person
+         */
+        void divideRounds(Person &person);
+
+        /**
+         * Decides whether the event is famous
+         * 
+         * @param person
+         */
+        void decideFame(Person &person);
+
+        /**
+         * Checks whether the given event was seen by events from a super majority of other nodes
+         * 
+         * @param y Event to check against
+         * @param endpoints List of endpoints
+         */
+        bool stronglySee(Event const &y, std::vector<types::Endpoint*> *endpoints);
 };
 
 /**
