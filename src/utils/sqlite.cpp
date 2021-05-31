@@ -9,7 +9,7 @@ namespace hashgraph {
 namespace utils {
 
 void createDatabaseTables(const std::string databasePath) {
-    
+
     sqlite3 *db;
 
     // open database
@@ -53,7 +53,7 @@ void createDatabaseTables(const std::string databasePath) {
         "sigDer    BLOB    NOT NULL, "
         "amount    INTEGER NOT NULL, "
         "timestamp INTEGER NOT NULL);", NULL, NULL, NULL);
-    
+
     // close database
     if (sqlite3_close(db) != SQLITE_OK) {
         fprintf(stderr, "Can't close database\n");
@@ -91,7 +91,7 @@ void storeTransferData(const std::string databasePath, const std::string senderI
     }
 
     sqlite3_reset(stmt);
-    
+
     sqlite3_bind_text(stmt, 1, senderId.c_str(), -1, SQLITE_TRANSIENT);
 
     if (sqlite3_step(stmt) != SQLITE_DONE){

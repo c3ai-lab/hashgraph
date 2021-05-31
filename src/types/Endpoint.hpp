@@ -19,7 +19,7 @@ class Endpoint {
         /**
          * Unique identifier of the node
          */
-		std::string identifier;
+        std::string identifier;
 
         /**
          * Limits access to gossiping client
@@ -31,22 +31,22 @@ class Endpoint {
          */
         std::unique_ptr<message::HashgraphClient> client;
 
-	public:
+    public:
 
         /**
          * DER encoded public key
          */
-		std::string pkDer;
+        std::string pkDer;
 
         /**
          * Constructor
          */
-		Endpoint(const std::string host, int port, const std::string certPath);
+        Endpoint(const std::string host, int port, const std::string certPath);
 
         /**
          * Destructor
          */
-		~Endpoint();
+        ~Endpoint();
 
         /**
          * Exchange gossip data with other nodes
@@ -59,7 +59,7 @@ class Endpoint {
         /**
          * Return the nodes' identifier
          */
-		std::string getIdentifier() const;
+        std::string getIdentifier() const;
 };
 
 };

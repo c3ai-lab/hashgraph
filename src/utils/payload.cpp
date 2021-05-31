@@ -8,7 +8,6 @@
 namespace hashgraph {
 namespace utils {
 
-
 bool verifyGossipPacket(const std::vector<types::Endpoint*> *endpoints, const message::GossipPacket packet, const std::string sigDer) {
 
     types::Endpoint *ep = NULL;

@@ -72,7 +72,7 @@ class SQLiteTransferRunner : public Runnable {
             // write to database
             utils::storeTransferData(this->dbPath, identifier, this->receiver, this->pkDer, this->sigDer, this->amount, this->timestamp);
         }
-};
+    };
 
 };
 };

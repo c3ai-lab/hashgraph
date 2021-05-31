@@ -16,37 +16,37 @@ namespace types {
 
 Endpoint::Endpoint(const std::string host, int port, const std::string certPath) {
 
-	// read certificate from disk
-	std::ifstream cert(certPath);
-	std::string certPEM{std::istreambuf_iterator<char>{cert}, {}};
+    // read certificate from disk
+    std::ifstream cert(certPath);
+    std::string certPEM{std::istreambuf_iterator<char>{cert}, {}};
 
     // DER encoded public key
     this->pkDer = utils::getPublicDERFromCertPEM(certPEM);
 
-	// build identifier
-	this->identifier = utils::encodeIdentifier(this->pkDer);
+    // build identifier
+    this->identifier = utils::encodeIdentifier(this->pkDer);
 
     // socket factory setup
     std::shared_ptr<TSSLSocketFactory> sslSocketFactory(new TSSLSocketFactory(SSLProtocol::TLSv1_2));
     sslSocketFactory->loadTrustedCertificatesFromBuffer(certPEM.c_str());
 
     // socket setup
-	std::shared_ptr<TSSLSocket> socket = sslSocketFactory->createSocket(host, port);
+    std::shared_ptr<TSSLSocket> socket = sslSocketFactory->createSocket(host, port);
     socket->setRecvTimeout(30000);
     socket->setSendTimeout(30000);
 
-	std::shared_ptr<TBufferedTransport> transport = std::make_shared<TBufferedTransport>(socket);
-	std::shared_ptr<TBinaryProtocol> protocol     = std::make_shared<TBinaryProtocol>(transport);
+    std::shared_ptr<TBufferedTransport> transport = std::make_shared<TBufferedTransport>(socket);
+    std::shared_ptr<TBinaryProtocol> protocol     = std::make_shared<TBinaryProtocol>(transport);
 
-	this->client = std::unique_ptr<message::HashgraphClient>(
-		new message::HashgraphClient(protocol)
-	);
+    this->client = std::unique_ptr<message::HashgraphClient>(
+        new message::HashgraphClient(protocol)
+    );
 }
 
 Endpoint::~Endpoint() {
-	if (this->client->getInputProtocol()->getTransport()->isOpen()) {
+    if (this->client->getInputProtocol()->getTransport()->isOpen()) {
         this->client->getInputProtocol()->getTransport()->close();
-    }		
+    }
 }
 
 void Endpoint::exchangeGossipData(const message::GossipPacket packet, const std::string sigDer) {

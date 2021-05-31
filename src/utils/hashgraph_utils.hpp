@@ -63,7 +63,6 @@ const std::string byteToHex(const std::string bytes);
  */
 bool ecdsaVerifyMessage(const std::string pkDer, const std::string sigDer, const std::string msg);
 
-
 /**
  * Sign a message with ECDSA
  *

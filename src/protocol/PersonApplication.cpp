@@ -18,7 +18,7 @@ void PersonApplication::setEventLogging(bool logEvents) {
 
 void PersonApplication::storeTransferData(const protocol::Event *event) {
     this->getManager()->add(std::make_shared<runner::SQLiteTransferRunner>(
-		this->getDatabasePath(),
+        this->getDatabasePath(),
         event->getData().payload.receiverId,
         event->getData().payload.senderPkDer,
         event->getData().payload.sigDer,
@@ -31,7 +31,7 @@ void PersonApplication::writeEventToLog(const protocol::Event *event) {
     if (!this->logEvents) return;
 
     std::stringstream payload;
-	if (event->getData().__isset.payload) {
+    if (event->getData().__isset.payload) {
         event->getData().payload.printTo(payload);
     }
 

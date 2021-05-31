@@ -14,7 +14,7 @@ const std::string hexToByte(const std::string hex) {
     len = (len + 1) / 2; 
     unsigned char *buffer = (unsigned char*)malloc(len);
     BN_bn2bin(input, buffer);
-    
+
     // byte string
     std::string bytes = std::string(buffer, buffer+len);
 
@@ -26,17 +26,17 @@ const std::string hexToByte(const std::string hex) {
 }
 
 const std::string byteToHex(const std::string bytes) {
-	std::string buffer;
-	char hex[3];
+    std::string buffer;
+    char hex[3];
     for (size_t i=0; i < bytes.length(); i++) {
         sprintf(hex, "%02hhx", bytes.data()[i]);
         buffer.append(hex);
     }
-	return buffer;
+    return buffer;
 }
 
 const std::string encodeIdentifier(const std::string pkDer) {
-	return "11x" + utils::byteToHex(utils::SHA3(pkDer)).substr(24, std::string::npos);
+    return "11x" + utils::byteToHex(utils::SHA3(pkDer)).substr(24, std::string::npos);
 }
 
 };

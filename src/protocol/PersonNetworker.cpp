@@ -21,7 +21,7 @@ PersonNetworker::PersonNetworker(const std::string skPath, const std::string cer
     // read private key from disk
     std::ifstream sk(skPath);
     this->skPEM.assign(std::istreambuf_iterator<char>(sk), std::istreambuf_iterator<char>());
-    
+
     // read certificate from disk
     std::ifstream cert(certPath);
     this->certPEM.assign(std::istreambuf_iterator<char>(cert), std::istreambuf_iterator<char>());
@@ -99,7 +99,7 @@ void PersonNetworker::balance_history(std::vector<message::BalanceTransfer> & _r
 }
 
 void PersonNetworker::challenge(std::string& _return) {
-	_return.assign("dummy");
+    _return.assign("dummy");
 }
 
 };

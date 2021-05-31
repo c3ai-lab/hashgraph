@@ -16,54 +16,54 @@ namespace runner {
  */
 class SQLiteLogRunner : public Runnable {
 
-	private:
-
-		/**
-		 * Path of the database file
-		 */
-		const std::string dbPath;
-
-		/**
-		 * Event owner
-		 */
-		const std::string owner;
+    private:
 
         /**
-		 * Event round
-		 */
-		const int round;
+         * Path of the database file
+         */
+        const std::string dbPath;
 
         /**
-		 * Event time
-		 */
-		const int64_t time;
+         * Event owner
+         */
+        const std::string owner;
 
         /**
-		 * Consensus timestamp
-		 */
-		const int64_t cnsTime;
+         * Event round
+         */
+        const int round;
 
         /**
-		 * Event self hash
-		 */
-		const std::string selfHash;
+         * Event time
+         */
+        const int64_t time;
 
         /**
-		 * Event gossip hash
-		 */
-		const std::string gossipHash;
+         * Consensus timestamp
+         */
+        const int64_t cnsTime;
 
         /**
-		 * Event payload
-		 */
-		const std::string payload;
+         * Event self hash
+         */
+        const std::string selfHash;
 
-	public:
+        /**
+         * Event gossip hash
+         */
+        const std::string gossipHash;
 
-		/**
-		 * Constructor
-		 */
-		SQLiteLogRunner(const std::string dbPath, const std::string owner, const int round, const int64_t time, const int64_t cnsTime, const std::string selfHash, const std::string gossipHash, const std::string payload) :
+        /**
+         * Event payload
+         */
+        const std::string payload;
+
+    public:
+
+        /**
+         * Constructor
+         */
+        SQLiteLogRunner(const std::string dbPath, const std::string owner, const int round, const int64_t time, const int64_t cnsTime, const std::string selfHash, const std::string gossipHash, const std::string payload) :
             dbPath(dbPath),
             owner(owner),
             round(round),
@@ -73,12 +73,12 @@ class SQLiteLogRunner : public Runnable {
             gossipHash(gossipHash),
             payload(payload) {};
 
-		/**
-		 * Write to log to database
-		 */
-		void run() {
-			utils::writeToLog(this->dbPath, this->owner, this->round, this->time, this->cnsTime, this->selfHash, this->gossipHash, this->payload);
-		}
+        /**
+         * Write to log to database
+         */
+        void run() {
+            utils::writeToLog(this->dbPath, this->owner, this->round, this->time, this->cnsTime, this->selfHash, this->gossipHash, this->payload);
+        }
 };
 
 };

@@ -5,7 +5,6 @@
 #include "SuperPerson.hpp"
 #include "../message/Hashgraph.h"
 
-
 namespace hashgraph {
 namespace protocol {
 
@@ -25,10 +24,10 @@ class PersonApplication : virtual public SuperPerson {
 
     public:
 
-		/**
-		 * Constructor
-		 */
-		PersonApplication();
+        /**
+         * Constructor
+         */
+        PersonApplication();
 
         /**
          * Store the transfer data
@@ -45,11 +44,11 @@ class PersonApplication : virtual public SuperPerson {
         void writeEventToLog(const protocol::Event *event);
 
         /**
-		 * Constructor
-		 * 
+         * Constructor
+         * 
          * @param logEvents Flag that indicates whether all events should be logged
-		 */
-		void setEventLogging(bool logEvents);
+         */
+        void setEventLogging(bool logEvents);
 };
 
 };

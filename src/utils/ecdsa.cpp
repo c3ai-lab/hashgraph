@@ -68,18 +68,18 @@ std::string getIdentifierFromPrivatePEM(const std::string pem) {
     // cleanup
     EC_KEY_free(key);
 
-	// create identifier
-	return utils::encodeIdentifier(pkDer);
+    // create identifier
+    return utils::encodeIdentifier(pkDer);
 }
 
 EC_KEY* getKeyFromPublicDER(const std::string pkDer) {
-	EC_KEY *pk = NULL;
-	BIO *bio = BIO_new_mem_buf((void*)pkDer.c_str(), pkDer.length());
-	if (!bio) {
-       fprintf(stderr, "BIO_new_mem_buf failed\n");
-	   return NULL;
-	}
-	d2i_EC_PUBKEY_bio(bio, &pk);
+    EC_KEY *pk = NULL;
+    BIO *bio = BIO_new_mem_buf((void*)pkDer.c_str(), pkDer.length());
+    if (!bio) {
+        fprintf(stderr, "BIO_new_mem_buf failed\n");
+        return NULL;
+    }
+    d2i_EC_PUBKEY_bio(bio, &pk);
     BIO_free(bio);
     return pk;
 }
@@ -95,34 +95,34 @@ std::string getPublicDERFromCertPEM(const std::string pem) {
     // cleanup
     EC_KEY_free(key);
 
-	// create identifier
-	return pkDer;
+    // create identifier
+    return pkDer;
 }
 
 bool ecdsaVerifyMessage(const std::string pkDer, const std::string sigDer, const std::string msg) {
 
-	// public key from DER encoded data
-	EC_KEY* pk = getKeyFromPublicDER(pkDer);
- 
-	// hash message
-	std::string digest = utils::SHA256(msg);
-	
-	// verify signature
-   	bool valid = ECDSA_verify(0, (const unsigned char*)digest.c_str(), digest.length(), (const unsigned char*)sigDer.c_str(), sigDer.length(), pk) == 1;
+    // public key from DER encoded data
+    EC_KEY* pk = getKeyFromPublicDER(pkDer);
+
+    // hash message
+    std::string digest = utils::SHA256(msg);
+
+    // verify signature
+    bool valid = ECDSA_verify(0, (const unsigned char*)digest.c_str(), digest.length(), (const unsigned char*)sigDer.c_str(), sigDer.length(), pk) == 1;
 
     // cleanup
     EC_KEY_free(pk);
 
-	return valid;
+    return valid;
 }
 
 std::string ecdsaSignMessage(const std::string skDer, const std::string msg) {
 
     // secret key from DER encoded data
-	EC_KEY* sk = getKeyFromPrivatePEM(skDer);
+    EC_KEY* sk = getKeyFromPrivatePEM(skDer);
 
-	// hash message
-	std::string digest = utils::SHA256(msg);
+    // hash message
+    std::string digest = utils::SHA256(msg);
 
     // signature length
     unsigned int siglen;
@@ -138,7 +138,7 @@ std::string ecdsaSignMessage(const std::string skDer, const std::string msg) {
     std::string sig = std::string(buf, buf+siglen);
 
     // cleanup
-    free(buf);
+    OPENSSL_free(buf);
 
     return sig;
 }

@@ -57,7 +57,7 @@ class PersonNetworker : virtual public SuperPerson, virtual public message::Hash
         /**
          * PEM encoded certificate
          */
-		std::string certPEM;
+        std::string certPEM;
 
     public:
 
@@ -104,18 +104,18 @@ class PersonNetworker : virtual public SuperPerson, virtual public message::Hash
         void balance_history(std::vector<message::BalanceTransfer> & _return, const std::string& ownerId);
 
         /**
-		 * Receives a gossip from another node
-		 *
-		 * @param packet Gossip data packet
-		 * @param sigDer Byte string of the DER encoded packet
-		 */
-		virtual void receiveGossip(const message::GossipPacket &packet, const std::string &sigDer) = 0;
+         * Receives a gossip from another node
+         *
+         * @param packet Gossip data packet
+         * @param sigDer Byte string of the DER encoded packet
+         */
+        virtual void receiveGossip(const message::GossipPacket &packet, const std::string &sigDer) = 0;
 
         /**
          * Transfer request from a user
          * 
          * @param ownerPkDer
-		 * @param amount
+         * @param amount
          * @param receiverId
          * @param challenge
          * @param sigDer

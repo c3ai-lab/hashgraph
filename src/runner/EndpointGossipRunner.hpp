@@ -56,7 +56,7 @@ class EndpointGossipRunner : public Runnable {
             // send gossip data
             this->endpoint->exchangeGossipData(this->packet, utils::ecdsaSignMessage(this->skPEM, stream.str()));
         }
-    };
+};
 
 };
 };

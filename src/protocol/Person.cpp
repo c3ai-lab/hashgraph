@@ -15,28 +15,28 @@ namespace protocol {
  * @param endpoints Network endpoints
  */
 static std::unordered_map<std::string, Event*> findUFW(std::vector<Event*> const &witnesses, std::vector<types::Endpoint*> *endpoints) {
-	std::unordered_map<std::string, Event*> v;
-	std::unordered_map<std::string, int> b;
+    std::unordered_map<std::string, Event*> v;
+    std::unordered_map<std::string, int> b;
 
-	for (std::vector<types::Endpoint*>::iterator it = endpoints->begin(); it != endpoints->end(); ++it) {
-		v[(*it)->getIdentifier()] = NULL;
-		b[(*it)->getIdentifier()] = 0;
-	}
+    for (std::vector<types::Endpoint*>::iterator it = endpoints->begin(); it != endpoints->end(); ++it) {
+        v[(*it)->getIdentifier()] = NULL;
+        b[(*it)->getIdentifier()] = 0;
+    }
 
-	for (std::size_t i = 0; i < witnesses.size(); i++) {
-		if (witnesses[i]->getFamous() == true) {
-			std::string owner = witnesses[i]->getData().owner;
-			if (b[owner] == 1) {
-				b[owner] = -1;
-				v[owner] = NULL;
-			}
-			if (b[owner] == 0) {
-				b[owner] = 1;
-				v[owner] = witnesses[i];
-			}
-		}
-	}
-	return v;
+    for (std::size_t i = 0; i < witnesses.size(); i++) {
+        if (witnesses[i]->getFamous() == true) {
+            std::string owner = witnesses[i]->getData().owner;
+            if (b[owner] == 1) {
+                b[owner] = -1;
+                v[owner] = NULL;
+            }
+            if (b[owner] == 0) {
+                b[owner] = 1;
+                v[owner] = witnesses[i];
+            }
+        }
+    }
+    return v;
 }
 
 /**
@@ -47,12 +47,12 @@ static std::unordered_map<std::string, Event*> findUFW(std::vector<Event*> const
  */
 bool compareEventsGreater(const Event* lhs, const Event* rhs) {
 
-	// compare events by timestamp
-	if (lhs->getData().timestamp != rhs->getData().timestamp) 
-		return lhs->getData().timestamp > rhs->getData().timestamp;
+    // compare events by timestamp
+    if (lhs->getData().timestamp != rhs->getData().timestamp) 
+        return lhs->getData().timestamp > rhs->getData().timestamp;
 
-	// compare events by their hash
-	return (lhs->getHash().compare(rhs->getHash()) > 0);
+    // compare events by their hash
+    return (lhs->getHash().compare(rhs->getHash()) > 0);
 }
 
 /**
@@ -63,12 +63,12 @@ bool compareEventsGreater(const Event* lhs, const Event* rhs) {
  */
 bool compareEventsLesser(const Event* lhs, const Event* rhs) {
 
-	// compare events by timestamp
-	if (lhs->getData().timestamp != rhs->getData().timestamp) 
-		return lhs->getData().timestamp < rhs->getData().timestamp;
+    // compare events by timestamp
+    if (lhs->getData().timestamp != rhs->getData().timestamp) 
+        return lhs->getData().timestamp < rhs->getData().timestamp;
 
-	// compare events by their hash
-	return (lhs->getHash().compare(rhs->getHash()) < 0);
+    // compare events by their hash
+    return (lhs->getHash().compare(rhs->getHash()) < 0);
 }
 
 Person::Person(const std::string skPath, const std::string certPath, std::vector<types::Endpoint*> *endpoints) : PersonNetworker(skPath, certPath), PersonApplication(), currentRound(0), endpoints(endpoints) {
@@ -76,149 +76,149 @@ Person::Person(const std::string skPath, const std::string certPath, std::vector
     // set node identifier
     this->setIdentifier(utils::getIdentifierFromPrivatePEM(this->skPEM));
 
-	// initial event data
-	message::GossipData d;
-	d.owner 	 = this->getIdentifier();
-	d.timestamp  = 0;
-	d.selfHash 	 = "\0";
-	d.gossipHash = "\0";
-	
-	// starter event
-	hashgraph.insert(hashgraph.begin(), new Event(*this, d));
+    // initial event data
+    message::GossipData d;
+    d.owner 	 = this->getIdentifier();
+    d.timestamp  = 0;
+    d.selfHash 	 = "\0";
+    d.gossipHash = "\0";
+
+    // starter event
+    hashgraph.insert(hashgraph.begin(), new Event(*this, d));
 }
 
 Person::~Person() {
 }
 
 Person&	Person::operator=(Person const &){
-	return *this;
+    return *this;
 }
 
 bool Person::operator==(Person const &rhs) {
-	return this->getIdentifier() == rhs.getIdentifier();
+    return this->getIdentifier() == rhs.getIdentifier();
 }
 
 std::vector<Event*>	Person::findWitnesses(int const &round) const {
-	std::size_t size = this->getHashgraph().size();
+    std::size_t size = this->getHashgraph().size();
 
-	std::vector<Event*> witnesses;
-	const std::vector<Event*> &hashRef = this->getHashgraph();
-	for (std::size_t i = 0; i < size && hashRef[i]->getRound() >= round - 1; i++) {
-		if (hashRef[i]->getRound() == round && hashRef[i]->getWitness() == true)
-			witnesses.push_back(hashRef[i]);
-	}
-	return witnesses;
+    std::vector<Event*> witnesses;
+    const std::vector<Event*> &hashRef = this->getHashgraph();
+    for (std::size_t i = 0; i < size && hashRef[i]->getRound() >= round - 1; i++) {
+        if (hashRef[i]->getRound() == round && hashRef[i]->getWitness() == true)
+            witnesses.push_back(hashRef[i]);
+    }
+    return witnesses;
 }
 
 int	Person::finalizeOrder(std::size_t n, int const &r, std::vector<Event*> const &w) {
-	std::vector<int64_t> s;
-	std::unordered_map<std::string, Event*> ufw;
-	Event *tmp;
+    std::vector<int64_t> s;
+    std::unordered_map<std::string, Event*> ufw;
+    Event *tmp;
 
-	ufw = findUFW(w, this->endpoints);
+    ufw = findUFW(w, this->endpoints);
 
-	std::size_t j;
-	for (j = 0; j < this->endpoints->size() && (!ufw[this->endpoints->at(j)->getIdentifier()] || ufw[this->endpoints->at(j)->getIdentifier()]->ancestor(*(hashgraph[n]))); j++)
-		;
-	if (j == this->endpoints->size()) {
-		for (j = 0; j < this->endpoints->size(); j++) {
-			if (ufw[this->endpoints->at(j)->getIdentifier()]) {
-				tmp = ufw[this->endpoints->at(j)->getIdentifier()];
-				while (tmp->getSelfParent() && tmp->getSelfParent()->ancestor(*(hashgraph[n])))
-					tmp = tmp->getSelfParent();
-				s.push_back(tmp->getData().timestamp);
-			}
-		}
-		if (s.size() == 0)
-			return (1);
-		hashgraph[n]->setRoundReceived(r);
-		std::sort(s.begin(),s.end());
-		hashgraph[n]->setConsensusTimestamp(s[s.size() / 2]);
-		if (hashgraph[n]->getData().__isset.payload) {
-			this->storeTransferData(hashgraph[n]); 
-		}
-		this->writeEventToLog(this->hashgraph[n]);
+    std::size_t j;
+    for (j = 0; j < this->endpoints->size() && (!ufw[this->endpoints->at(j)->getIdentifier()] || ufw[this->endpoints->at(j)->getIdentifier()]->ancestor(*(hashgraph[n]))); j++)
+        ;
+    if (j == this->endpoints->size()) {
+        for (j = 0; j < this->endpoints->size(); j++) {
+            if (ufw[this->endpoints->at(j)->getIdentifier()]) {
+                tmp = ufw[this->endpoints->at(j)->getIdentifier()];
+                while (tmp->getSelfParent() && tmp->getSelfParent()->ancestor(*(hashgraph[n])))
+                    tmp = tmp->getSelfParent();
+                s.push_back(tmp->getData().timestamp);
+            }
+        }
+        if (s.size() == 0)
+            return 1;
+        hashgraph[n]->setRoundReceived(r);
+        std::sort(s.begin(),s.end());
+        hashgraph[n]->setConsensusTimestamp(s[s.size() / 2]);
+        if (hashgraph[n]->getData().__isset.payload) {
+            this->storeTransferData(hashgraph[n]); 
+        }
+        this->writeEventToLog(this->hashgraph[n]);
 
-		return (1);
-	}
-	return (0);
+        return 1;
+    }
+    return 0;
 }
 
 void Person::findOrder() {
-	std::size_t i;
-	std::vector<Event*> w;
+    std::size_t i;
+    std::vector<Event*> w;
 
-	for (std::size_t n = this->hashgraph.size() - 1; n < this->hashgraph.size(); n--) {
-		if (hashgraph[n]->getRoundRecieved() == -1) {
-			for (int r = this->hashgraph[n]->getRound(); r <= this->hashgraph[0]->getRound(); r++) {
-				w = this->findWitnesses(r);
-				for (i = 0; i < w.size() && w[i]->getFamous() != -1; i++)
-					;
-				if (i == w.size()) {
-					if (this->finalizeOrder(n, r, w))
-						break;
-				}
-			}
-		}
-	}
+    for (std::size_t n = this->hashgraph.size() - 1; n < this->hashgraph.size(); n--) {
+        if (hashgraph[n]->getRoundRecieved() == -1) {
+            for (int r = this->hashgraph[n]->getRound(); r <= this->hashgraph[0]->getRound(); r++) {
+                w = this->findWitnesses(r);
+                for (i = 0; i < w.size() && w[i]->getFamous() != -1; i++)
+                    ;
+                if (i == w.size()) {
+                    if (this->finalizeOrder(n, r, w))
+                        break;
+                }
+            }
+        }
+    }
 }
 
 Event *Person::getTopNode(std::string identifier) const {
-	Event *top = NULL;
-	int64_t t  = -1;
+    Event *top = NULL;
+    int64_t t  = -1;
 
-	for (std::size_t i = 0; i < hashgraph.size(); i++) {
-		if (hashgraph[i]->getData().owner == identifier && hashgraph[i]->getData().timestamp > t) {
-			t   = hashgraph[i]->getData().timestamp;
-			top = hashgraph[i];
-		}
-	}
-	return top;
+    for (std::size_t i = 0; i < hashgraph.size(); i++) {
+        if (hashgraph[i]->getData().owner == identifier && hashgraph[i]->getData().timestamp > t) {
+            t   = hashgraph[i]->getData().timestamp;
+            top = hashgraph[i];
+        }
+    }
+    return top;
 }
 
 Event *Person::getForkNode(Person const &target) const {
-	Event *fork = NULL;
-	int64_t t   = -1;
-	int64_t t2  = -1;
+    Event *fork = NULL;
+    int64_t t   = -1;
+    int64_t t2  = -1;
 
-	for (std::size_t i = 0; i < hashgraph.size(); i++) {
-		if (hashgraph[i]->getData().owner == target.getIdentifier() && hashgraph[i]->getData().timestamp > t) {
-			t = hashgraph[i]->getData().timestamp;
-		}
-	}
-	for (std::size_t i = 0; i < hashgraph.size(); i++) {
-		if (hashgraph[i]->getData().owner == target.getIdentifier() && hashgraph[i]->getData().timestamp > t2 && hashgraph[i]->getData().timestamp != t) {
-			t2 = hashgraph[i]->getData().timestamp;
-			fork = hashgraph[i];
-		}
-	}
-	return fork;
+    for (std::size_t i = 0; i < hashgraph.size(); i++) {
+        if (hashgraph[i]->getData().owner == target.getIdentifier() && hashgraph[i]->getData().timestamp > t) {
+            t = hashgraph[i]->getData().timestamp;
+        }
+    }
+    for (std::size_t i = 0; i < hashgraph.size(); i++) {
+        if (hashgraph[i]->getData().owner == target.getIdentifier() && hashgraph[i]->getData().timestamp > t2 && hashgraph[i]->getData().timestamp != t) {
+            t2 = hashgraph[i]->getData().timestamp;
+            fork = hashgraph[i];
+        }
+    }
+    return fork;
 }
 
 void Person::createEvent(std::string gossiper) {
 
-	// unix timestamp in milliseconds
-	int64_t timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-		std::chrono::system_clock::now().time_since_epoch()).count();
+    // unix timestamp in milliseconds
+    int64_t timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
 
-	message::GossipData d;
-	d.owner      = this->getIdentifier();
-	d.timestamp  = timestamp;
-	d.selfHash   = (this->getTopNode(this->getIdentifier()) ? this->getTopNode(this->getIdentifier())->getHash() : "\0");
-	d.gossipHash = (this->getTopNode(gossiper) ? this->getTopNode(gossiper)->getHash() : "\0");
-	
-	// process first transfer request in queue
-	if (this->transferRequests.size() > 0) {
-		d.__set_payload(this->transferRequests.front());
-		this->transferRequests.pop();
-	}
-	
-	// only for testing, force a fork every 100th message (approx.)
-	if (MAKE_FORKS && !(std::rand() % 100) && this->getForkNode(*this)) {
-		d.selfHash = this->getForkNode(*this)->getHash();
-	}	
-	
-	hashgraph.insert(hashgraph.begin(), new Event(*this, d));
+    message::GossipData d;
+    d.owner      = this->getIdentifier();
+    d.timestamp  = timestamp;
+    d.selfHash   = (this->getTopNode(this->getIdentifier()) ? this->getTopNode(this->getIdentifier())->getHash() : "\0");
+    d.gossipHash = (this->getTopNode(gossiper) ? this->getTopNode(gossiper)->getHash() : "\0");
+
+    // process first transfer request in queue
+    if (this->transferRequests.size() > 0) {
+        d.__set_payload(this->transferRequests.front());
+        this->transferRequests.pop();
+    }
+
+    // only for testing, force a fork every 100th message (approx.)
+    if (MAKE_FORKS && !(std::rand() % 100) && this->getForkNode(*this)) {
+        d.selfHash = this->getForkNode(*this)->getHash();
+    }	
+
+    hashgraph.insert(hashgraph.begin(), new Event(*this, d));
 }
 
 void Person::crypto_transfer(const std::string &ownerPkDer, const int32_t amount, const std::string &receiverId, const std::string &challenge, const std::string &sigDer) {
@@ -230,9 +230,9 @@ void Person::crypto_transfer(const std::string &ownerPkDer, const int32_t amount
     p.challenge   = challenge;
     p.sigDer      = sigDer;
 
-	this->hgMutex.lock();
+    this->hgMutex.lock();
     this->transferRequests.push(p);
-	this->hgMutex.unlock();
+    this->hgMutex.unlock();
 }
 
 void Person::startGossip(int interval, const std::atomic<bool> *quit) {
@@ -242,18 +242,18 @@ void Person::startGossip(int interval, const std::atomic<bool> *quit) {
     // target node
     types::Endpoint *tar;
 
-	while (!quit->load()) {
+    while (!quit->load()) {
 
         // skip if queue is already filled
         if (this->getManager()->pendingTaskCount() <= this->getManager()->pendingTaskCountMax()) {
 
-			do {
-				// select a random target from the list of known nodes
-				tar = this->endpoints->at(std::rand() % this->endpoints->size());
-			}
-			while (tar->getIdentifier() == this->getIdentifier());
-			
-			std::unordered_map<std::string, bool> b;
+            do {
+                // select a random target from the list of known nodes
+                tar = this->endpoints->at(std::rand() % this->endpoints->size());
+            }
+            while (tar->getIdentifier() == this->getIdentifier());
+            
+            std::unordered_map<std::string, bool> b;
             for (std::vector<types::Endpoint*>::iterator it = this->endpoints->begin(); it != this->endpoints->end(); ++it) {
                 b[(*it)->getIdentifier()] = false;
             }
@@ -273,7 +273,7 @@ void Person::startGossip(int interval, const std::atomic<bool> *quit) {
                     packet.data.push_back(hashgraph[i]->getData());
                 }
             }
-			packet.gossiper = this->getIdentifier();
+            packet.gossiper = this->getIdentifier();
             
             this->hgMutex.unlock();
 
@@ -283,7 +283,7 @@ void Person::startGossip(int interval, const std::atomic<bool> *quit) {
 
         // limit gossip interval
         std::this_thread::sleep_for(std::chrono::microseconds(interval));
-	}
+    }
 }
 
 void Person::receiveGossip(const message::GossipPacket &packet, const std::string &sigDer) {  
@@ -328,62 +328,62 @@ void Person::receiveGossip(const message::GossipPacket &packet, const std::strin
 }
 
 void Person::linkEvents(std::vector<Event*> const &nEvents) {
-	for (std::size_t i = 0; i < nEvents.size(); i++) {
-		if (nEvents[i]->getSelfParent() == NULL && nEvents[i]->getData().selfHash != "\0") {
-			int c = 0;
-			for (std::size_t j = 0; j < this->hashgraph.size(); j++) {
-				if (this->hashgraph[j]->getHash() == nEvents[i]->getData().selfHash) {
-					nEvents[i]->setSelfParent(this->hashgraph[j]);
-					c++;
-					if (c == 2) 
-						break;
-				}
-				if (this->hashgraph[j]->getHash() == nEvents[i]->getData().gossipHash) {
-					nEvents[i]->setGossiperParent(this->hashgraph[j]);
-					c++;
-					if (c == 2) 
-						break;
-				}
-			}
-		}
-	}
+    for (std::size_t i = 0; i < nEvents.size(); i++) {
+        if (nEvents[i]->getSelfParent() == NULL && nEvents[i]->getData().selfHash != "\0") {
+            int c = 0;
+            for (std::size_t j = 0; j < this->hashgraph.size(); j++) {
+                if (this->hashgraph[j]->getHash() == nEvents[i]->getData().selfHash) {
+                    nEvents[i]->setSelfParent(this->hashgraph[j]);
+                    c++;
+                    if (c == 2) 
+                        break;
+                }
+                if (this->hashgraph[j]->getHash() == nEvents[i]->getData().gossipHash) {
+                    nEvents[i]->setGossiperParent(this->hashgraph[j]);
+                    c++;
+                    if (c == 2) 
+                        break;
+                }
+            }
+        }
+    }
 }
 
 const std::vector<Event*> &Person::getHashgraph() const {
-	return this->hashgraph;
+    return this->hashgraph;
 }
 
 int Person::getCurRound() const {
-	return this->currentRound;
+    return this->currentRound;
 }
 
 void Person::incCurRound(){
-	this->currentRound++;
+    this->currentRound++;
 }
 
 void Person::removeOldBalls() {
-	for (std::size_t i = 0; i < hashgraph.size(); i++) {
+    for (std::size_t i = 0; i < hashgraph.size(); i++) {
 
-		// remove events from the hashgraph that
-		// are not witnesses and doesn't have a 
-		// consensus timestamp
-		if (this->hashgraph[i]->getConsensusTimestamp() != -1 && this->hashgraph[i]->getWitness() == false) {
-			this->hashgraph.erase(this->hashgraph.begin() + i);
-			i--;
-		}
+        // remove events from the hashgraph that
+        // are not witnesses and doesn't have a 
+        // consensus timestamp
+        if (this->hashgraph[i]->getConsensusTimestamp() != -1 && this->hashgraph[i]->getWitness() == false) {
+            this->hashgraph.erase(this->hashgraph.begin() + i);
+            i--;
+        }
 
-		// remove events from the hashgraph that are 
-		// older then 5 rounds from now
-		if (this->hashgraph[i]->getRound() < this->currentRound - 5) {
-			// if (hashgraph[i])
-			// {
-			// 	delete hashgraph[i];
-			// 	hashgraph[i] = NULL;
-			// }
-			this->hashgraph.erase(hashgraph.begin() + i);
-			i--;
-		}
-	}
+        // remove events from the hashgraph that are 
+        // older then 5 rounds from now
+        if (this->hashgraph[i]->getRound() < this->currentRound - 5) {
+            // if (hashgraph[i])
+            // {
+            // 	delete hashgraph[i];
+            // 	hashgraph[i] = NULL;
+            // }
+            this->hashgraph.erase(hashgraph.begin() + i);
+            i--;
+        }
+    }
 }
 
 };
