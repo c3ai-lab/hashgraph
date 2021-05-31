@@ -6,6 +6,7 @@
 #include <vector>
 #include <openssl/ec.h>
 #include "sqlite3.h"
+#include "../types/Endpoint.hpp"
 #include "../message/Hashgraph.h"
 
 namespace hashgraph {
@@ -54,13 +55,22 @@ const std::string hexToByte(const std::string hex);
 const std::string byteToHex(const std::string bytes);
 
 /**
- * Verifies a ECDSA signature
+ * Verifie a ECDSA signature
  *
  * @param pkDer A byte string of the DER encoded public key
  * @param sigDer A byte string of the DER encoded signature
  * @param msg The message to verify
  */
-bool verifyECDSASignature(const std::string pkDer, const std::string sigDer, const std::string msg);
+bool ecdsaVerifyMessage(const std::string pkDer, const std::string sigDer, const std::string msg);
+
+
+/**
+ * Sign a message with ECDSA
+ *
+ * @param skDer A byte string of the DER encoded secret key
+ * @param msg The message to sign
+ */
+std::string ecdsaSignMessage(const std::string skDer, const std::string msg);
 
 /**
  * Get an EC private key object from the given PEM
@@ -91,11 +101,11 @@ std::string encodeKeyToPublicDER(EC_KEY *key);
 std::string getIdentifierFromPrivatePEM(const std::string pem);
 
 /**
- * Builds the public identifier from a certificate pem
+ * Return the DER encoded public key
  *
- * @param pem
+ * @param pem PEM encoded certificate
  */
-std::string getIdentifierFromCertPEM(const std::string pem);
+std::string getPublicDERFromCertPEM(const std::string pem);
 
 /**
  * Create nessessary database tables
@@ -141,7 +151,7 @@ void getTransferHistory(const std::string databasePath, const std::string identi
 void writeToLog(const std::string databasePath, const std::string owner, int round, int64_t time, int64_t cnsTime, const std::string selfHash, const std::string gossipHash, const std::string payload);
 
 /**
- * Verifies gossip data
+ * Verify a gossip data
  *
  * @param ownerPkDer
  * @param amount
@@ -151,6 +161,15 @@ void writeToLog(const std::string databasePath, const std::string owner, int rou
  * @param sigDer
  */
 bool verifyGossipPayload(const std::string ownerPkDer, const int32_t amount, const std::string receiverId, const std::string challenge, const std::string sigDer);
+
+/**
+ * Verify a gossip packet
+ *
+ * @param endpoints
+ * @param packet
+ * @param sigDer
+ */
+bool verifyGossipPacket(const std::vector<types::Endpoint*> *endpoints, const message::GossipPacket packet, const std::string sigDer);
 
 };
 };

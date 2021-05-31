@@ -1,5 +1,5 @@
 #include <string>
-#include <stdio.h>
+#include <cstdio>
 #include <openssl/bn.h>
 #include "hashgraph_utils.hpp"
 

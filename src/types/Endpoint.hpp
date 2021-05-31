@@ -34,6 +34,11 @@ class Endpoint {
 	public:
 
         /**
+         * DER encoded public key
+         */
+		std::string pkDer;
+
+        /**
          * Constructor
          */
 		Endpoint(const std::string host, int port, const std::string certPath);
@@ -46,10 +51,10 @@ class Endpoint {
         /**
          * Exchange gossip data with other nodes
          * 
-         * @param senderId
-         * @param gossipData
+         * @param packet Gossip data
+         * @param sigDer DER encoded signature of the packet
          */
-        void exchangeGossipData(const std::string senderId, const std::vector<message::GossipData> &gossipData);
+        void exchangeGossipData(const message::GossipPacket packet, const std::string sigDer);
 
         /**
          * Return the nodes' identifier

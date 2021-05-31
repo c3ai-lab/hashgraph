@@ -265,19 +265,20 @@ void Person::startGossip(int interval, const std::atomic<bool> *quit) {
             Event* check = getTopNode(tar->getIdentifier());
 
             // find an events in the hashgraph the target has not seen yet
-            std::vector<message::GossipData> gossipData;
+            message::GossipPacket packet;
             for (std::size_t i = 0; i < hashgraph.size(); i++) {
                 if (!b[hashgraph[i]->getData().owner]) {
                     if (check && check->see(*(hashgraph[i])))
                         b[hashgraph[i]->getData().owner] = true;
-                    gossipData.push_back(hashgraph[i]->getData());
+                    packet.data.push_back(hashgraph[i]->getData());
                 }
             }
+			packet.gossiper = this->getIdentifier();
             
             this->hgMutex.unlock();
 
             // send data to remote endpoint
-            this->getManager()->add(std::make_shared<runner::EndpointGossipRunner>(tar, this->getIdentifier(), gossipData));
+            this->getManager()->add(std::make_shared<runner::EndpointGossipRunner>(tar, packet, this->skPEM));
         }
 
         // limit gossip interval
@@ -285,43 +286,45 @@ void Person::startGossip(int interval, const std::atomic<bool> *quit) {
 	}
 }
 
-void Person::receiveGossip(const std::string &gossiper, const std::vector<message::GossipData> &gossip) {
-	std::lock_guard<std::mutex> guard(this->hgMutex);
+void Person::receiveGossip(const message::GossipPacket &packet, const std::string &sigDer) {  
+    if (utils::verifyGossipPacket(this->endpoints, packet, sigDer)) {
+        std::lock_guard<std::mutex> guard(this->hgMutex);
 
-	Event *tmp;
-	std::size_t n;	
-	std::vector<Event*> nEvents;
+        Event *tmp;
+        std::size_t n;	
+        std::vector<Event*> nEvents;
 
-	for (std::size_t i=0; i < gossip.size(); i++) {
+        for (std::size_t i=0; i < packet.data.size(); i++) {
 
-		// create event from gossip data
-		tmp = new Event(*this, gossip[i]);
+            // create event from gossip data
+            tmp = new Event(*this, packet.data[i]);
 
-		// check whether new event not already exists in hashgraph and its payload is valid
-		for (n = 0; n < hashgraph.size(); n++) {
-			if (hashgraph[n]->getHash() == tmp->getHash())
-				break;
-		}
-		if (n >= hashgraph.size()) {
-			hashgraph.insert(hashgraph.begin(), tmp);
-			nEvents.push_back(tmp);
-		}
-		else delete tmp;
-	}
+            // check whether new event not already exists in hashgraph and its payload is valid
+            for (n = 0; n < hashgraph.size(); n++) {
+                if (hashgraph[n]->getHash() == tmp->getHash())
+                    break;
+            }
+            if (n >= hashgraph.size()) {
+                hashgraph.insert(hashgraph.begin(), tmp);
+                nEvents.push_back(tmp);
+            }
+            else delete tmp;
+        }
 
-	// create a new transfer event
-	this->createEvent(gossiper);
-	nEvents.push_back(hashgraph[0]);
+        // create a new transfer event
+        this->createEvent(packet.gossiper);
+        nEvents.push_back(hashgraph[0]);
 
-	// link new events, order them, detect round and decide famous property
-	std::sort(nEvents.begin(), nEvents.end(), compareEventsLesser);
-	this->linkEvents(nEvents);	
-	for (std::size_t i = 0; i < nEvents.size(); i++)
-		nEvents[i]->divideRounds(*this);
-	this->removeOldBalls();
-	for (std::size_t i = 0; i < nEvents.size(); i++)
-		nEvents[i]->decideFame(*this);
-	this->findOrder();
+        // link new events, order them, detect round and decide famous property
+        std::sort(nEvents.begin(), nEvents.end(), compareEventsLesser);
+        this->linkEvents(nEvents);	
+        for (std::size_t i = 0; i < nEvents.size(); i++)
+            nEvents[i]->divideRounds(*this);
+        this->removeOldBalls();
+        for (std::size_t i = 0; i < nEvents.size(); i++)
+            nEvents[i]->decideFame(*this);
+        this->findOrder();
+    }
 }
 
 void Person::linkEvents(std::vector<Event*> const &nEvents) {

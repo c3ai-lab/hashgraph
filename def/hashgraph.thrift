@@ -37,6 +37,11 @@ struct GossipData {
     5:string   owner;
 }
 
+struct GossipPacket {
+    1:string           gossiper;
+    2:list<GossipData> data;
+}
+
 ///////////////////////////////////////////////////////////
 // Hashgraph service definition
 ///////////////////////////////////////////////////////////
@@ -44,7 +49,7 @@ struct GossipData {
 service Hashgraph {
 
     // exchange gossip data
-    void receiveGossip(1:string gossiper, 2:list<GossipData> gossip)
+    void receiveGossip(1:GossipPacket packet, 2:string sigDer)
 
     // initiate a balance transfer
     void crypto_transfer(1:binary ownerPkDer, 2:i32 amount, 3:string receiverId, 4:binary challenge, 5:binary sigDer)

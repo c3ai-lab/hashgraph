@@ -1,6 +1,6 @@
 #include <fstream>
 #include <streambuf>
-#include <stdio.h>
+#include <cstdio>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TSSLSocket.h>
@@ -18,14 +18,19 @@ Endpoint::Endpoint(const std::string host, int port, const std::string certPath)
 
 	// read certificate from disk
 	std::ifstream cert(certPath);
-	std::string certificatePEM{std::istreambuf_iterator<char>{cert}, {}};
+	std::string certPEM{std::istreambuf_iterator<char>{cert}, {}};
 
-	// build public identifier
-	this->identifier = utils::getIdentifierFromCertPEM(certificatePEM);
+    // DER encoded public key
+    this->pkDer = utils::getPublicDERFromCertPEM(certPEM);
 
-    // client socket setup
+	// build identifier
+	this->identifier = utils::encodeIdentifier(this->pkDer);
+
+    // socket factory setup
     std::shared_ptr<TSSLSocketFactory> sslSocketFactory(new TSSLSocketFactory(SSLProtocol::TLSv1_2));
-    sslSocketFactory->loadTrustedCertificatesFromBuffer(certificatePEM.c_str());
+    sslSocketFactory->loadTrustedCertificatesFromBuffer(certPEM.c_str());
+
+    // socket setup
 	std::shared_ptr<TSSLSocket> socket = sslSocketFactory->createSocket(host, port);
     socket->setRecvTimeout(30000);
     socket->setSendTimeout(30000);
@@ -44,7 +49,7 @@ Endpoint::~Endpoint() {
     }		
 }
 
-void Endpoint::exchangeGossipData(const std::string senderId, const std::vector<message::GossipData> &gossipData) {
+void Endpoint::exchangeGossipData(const message::GossipPacket packet, const std::string sigDer) {
     if (this->gspMutex.try_lock()) {
         try {
             // connect to remote server
@@ -52,7 +57,7 @@ void Endpoint::exchangeGossipData(const std::string senderId, const std::vector<
                 this->client->getInputProtocol()->getTransport()->open();
             }
             // send gossip data
-            this->client->receiveGossip(senderId, gossipData);
+            this->client->receiveGossip(packet, sigDer);
             // close connection
             this->client->getInputProtocol()->getTransport()->close();
         }

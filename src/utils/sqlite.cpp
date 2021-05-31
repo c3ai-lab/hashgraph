@@ -1,7 +1,7 @@
 #include <string>
 #include <cstdint>
 #include <vector>
-#include <stdio.h>
+#include <cstdio>
 #include "sqlite3.h"
 #include "../message/Hashgraph.h"
 

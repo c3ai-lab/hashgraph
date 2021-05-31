@@ -2,6 +2,7 @@
 #define HASHGRAPH_RUNNER_ENDPOINT_GOSSIP_HPP
 
 #include <string>
+#include <sstream>
 #include <thrift/concurrency/Thread.h>
 #include "../types/Endpoint.hpp"
 #include "../message/Hashgraph.h"
@@ -24,30 +25,36 @@ class EndpointGossipRunner : public Runnable {
         types::Endpoint *endpoint;
 
         /**
-         * Identifier of the sender node
+         * Gossip packet
          */
-        const std::string identifier;
+        const message::GossipPacket packet;
 
         /**
-         * Gossip data to send
+         * PEM encoded secret key
          */
-        const std::vector<message::GossipData> gossipData;
+        const std::string skPEM;
 
     public:
 
         /**
          * Constructor
          */
-        EndpointGossipRunner(types::Endpoint *endpoint, const std::string identifier, const std::vector<message::GossipData> &gossipData) :
+        EndpointGossipRunner(types::Endpoint *endpoint, const message::GossipPacket packet, const std::string skPEM) :
             endpoint(endpoint),
-            identifier(identifier),
-            gossipData(gossipData) {}
+            packet(packet),
+            skPEM(skPEM) {}
 
         /**
          * Exchange gossip data
          */
         void run() {
-            this->endpoint->exchangeGossipData(this->identifier, this->gossipData);
+
+            // serialize packet data
+            std::stringstream stream;
+            packet.printTo(stream);
+
+            // send gossip data
+            this->endpoint->exchangeGossipData(this->packet, utils::ecdsaSignMessage(this->skPEM, stream.str()));
         }
     };
 

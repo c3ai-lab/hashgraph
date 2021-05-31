@@ -166,10 +166,10 @@ class Person : public PersonNetworker, public PersonApplication {
 		/**
 		 * Handle incoming gossip data
 		 *
-		 * @param gossiper Creator identifier of the gossip data
-		 * @param gossip Gossip data vector
+		 * @param packet Gossip data packet
+		 * @param sigDer Byte string of the DER encoded packet
 		 */
-		void receiveGossip(const std::string &gossiper, const std::vector<message::GossipData> &gossip);
+		void receiveGossip(const message::GossipPacket &packet, const std::string &sigDer);
 
         /**
          * Transfer request from a user

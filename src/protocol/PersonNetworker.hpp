@@ -106,10 +106,10 @@ class PersonNetworker : virtual public SuperPerson, virtual public message::Hash
         /**
 		 * Receives a gossip from another node
 		 *
-		 * @param gossiper Creator identifier of the gossip data
-		 * @param gossip Gossip data vector
-         */
-        virtual void receiveGossip(const std::string& gossiper, const std::vector<message::GossipData> &gossip) = 0;
+		 * @param packet Gossip data packet
+		 * @param sigDer Byte string of the DER encoded packet
+		 */
+		virtual void receiveGossip(const message::GossipPacket &packet, const std::string &sigDer) = 0;
 
         /**
          * Transfer request from a user
