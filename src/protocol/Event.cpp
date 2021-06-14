@@ -252,7 +252,7 @@ void Event::setFamous(char const &fame) {
     this->famous = fame;
 }
 
-int	Event::getRoundRecieved() const {
+int Event::getRoundRecieved() const {
     return this->roundRecieved;
 }
 

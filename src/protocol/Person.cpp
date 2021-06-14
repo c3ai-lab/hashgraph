@@ -98,7 +98,7 @@ bool Person::operator==(Person const &rhs) {
     return this->getIdentifier() == rhs.getIdentifier();
 }
 
-std::vector<Event*>	Person::findWitnesses(int const &round) const {
+std::vector<Event*> Person::findWitnesses(int const &round) const {
     std::size_t size = this->getHashgraph().size();
 
     std::vector<Event*> witnesses;
@@ -110,7 +110,7 @@ std::vector<Event*>	Person::findWitnesses(int const &round) const {
     return witnesses;
 }
 
-int	Person::finalizeOrder(std::size_t n, int const &r, std::vector<Event*> const &w) {
+int Person::finalizeOrder(std::size_t n, int const &r, std::vector<Event*> const &w) {
     std::vector<int64_t> s;
     std::unordered_map<std::string, Event*> ufw;
     Event *tmp;
@@ -286,7 +286,7 @@ void Person::startGossip(int interval, const std::atomic<bool> *quit) {
     }
 }
 
-void Person::receiveGossip(const message::GossipPacket &packet, const std::string &sigDer) {  
+void Person::receiveGossip(const message::GossipPacket &packet, const std::string &sigDer) {
     if (utils::verifyGossipPacket(this->endpoints, packet, sigDer)) {
         std::lock_guard<std::mutex> guard(this->hgMutex);
 

@@ -2,17 +2,16 @@
 #define HASHGRAPH_PROTOCOL_PERSON_NETWORKER_HPP
 
 #include <string>
-#include <map>
-#include <algorithm>
-#include <memory>
-#include <thread>
 #include <cstdint>
+#include <thrift/concurrency/Thread.h>
+#include <thrift/concurrency/Monitor.h>
 #include <thrift/server/TThreadPoolServer.h>
 #include "SuperPerson.hpp"
 #include "../types/Endpoint.hpp"
 #include "../message/Hashgraph.h"
 
 using namespace apache::thrift::server;
+using namespace apache::thrift::concurrency;
 
 namespace hashgraph {
 namespace protocol {
@@ -25,11 +24,6 @@ class PersonNetworker : virtual public SuperPerson, virtual public message::Hash
     private:
 
         /**
-         * Required to resolve a race condition
-         */
-        bool force_close;
-
-        /**
          * Thread pool based server
          */
         std::shared_ptr<TThreadPoolServer> server;
@@ -37,15 +31,7 @@ class PersonNetworker : virtual public SuperPerson, virtual public message::Hash
         /**
          * Listener thread for new connections
          */
-        std::shared_ptr<std::thread> thread;
-
-        /**
-         * Server starter function
-         * 
-         * @param ctx This context
-         * @param port Port under which the server is accessable
-         */
-        static void *serverStarter(PersonNetworker *ctx, int port);   
+        std::shared_ptr<Thread> thread;
 
     protected:
 

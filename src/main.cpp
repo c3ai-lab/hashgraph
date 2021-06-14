@@ -27,20 +27,16 @@ int main(int argc, char** argv) {
     signal(SIGPIPE, SIG_IGN);
 
     // detect interrupt signal
-    struct sigaction sa;
-    memset(&sa, 0, sizeof(sa) );
-    sa.sa_handler = [](int) {
+    signal(SIGINT, [](int) {
         quit.store(true);
-    };
-    sigfillset(&sa.sa_mask);
-    sigaction(SIGINT, &sa, NULL);
+    });
 
     // read node configuration file
     YAML::Node config = YAML::LoadFile(argv[1]);
 
     // suppress thrift global output
     apache::thrift::GlobalOutput.setOutputFunction([](const char* msg) {
-        if (DEBUG) apache::thrift::TOutput::errorTimeWrapper(msg);
+        /*if (DEBUG)*/ apache::thrift::TOutput::errorTimeWrapper(msg);
     });
 
     // list of network nodes

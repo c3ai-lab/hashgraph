@@ -1,22 +1,23 @@
 #include <fstream>
 #include <streambuf>
-#include <thrift/transport/TSSLSocket.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TBufferTransports.h>
+#include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/TSSLServerSocket.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include "PersonNetworker.hpp"
 #include "../utils/hashgraph_utils.hpp"
 
 using namespace apache::thrift;
+using namespace apache::thrift::concurrency;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 
 namespace hashgraph {
 namespace protocol {
 
-PersonNetworker::PersonNetworker(const std::string skPath, const std::string certPath) : 
-    force_close(false) {
+PersonNetworker::PersonNetworker(const std::string skPath, const std::string certPath) {
 
     // read private key from disk
     std::ifstream sk(skPath);
@@ -28,53 +29,37 @@ PersonNetworker::PersonNetworker(const std::string skPath, const std::string cer
 }
 
 PersonNetworker::~PersonNetworker() {
-    this->force_close = true;
-
-    // stop the server
-    if (this->server) {
-        this->server->stop();
-    }
-    // wait for receiver thread to exit
-    if (this->thread && this->thread->joinable()) {
-        this->thread->join();
-    }
+    server->stop();
+    thread->join();
 }
 
-void *PersonNetworker::serverStarter(PersonNetworker* ctx, int port) {
-    if (ctx->force_close) return NULL;
+void PersonNetworker::startServer(int port) {
 
     // https://stackoverflow.com/questions/28523035/best-way-to-create-a-fake-smart-pointer-when-you-need-one-but-only-have-a-refere
-    std::shared_ptr<PersonNetworker> handler(std::shared_ptr<PersonNetworker>(std::shared_ptr<PersonNetworker>(), ctx));
+    std::shared_ptr<PersonNetworker> handler(std::shared_ptr<PersonNetworker>(std::shared_ptr<PersonNetworker>(), this));
     std::shared_ptr<TProcessor> processor(new message::HashgraphProcessor(handler));
     std::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
     std::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
     // ssl transport setup
     std::shared_ptr<TSSLSocketFactory> sslSocketFactory(new TSSLSocketFactory(SSLProtocol::TLSv1_2));
-    sslSocketFactory->loadCertificateFromBuffer(ctx->certPEM.c_str());
-    sslSocketFactory->loadPrivateKeyFromBuffer(ctx->skPEM.c_str());
+    sslSocketFactory->loadCertificateFromBuffer(this->certPEM.c_str());
+    sslSocketFactory->loadPrivateKeyFromBuffer(this->skPEM.c_str());
     sslSocketFactory->authenticate(false);
 
-    // server socket setup
-    TSSLServerSocket *socket = new TSSLServerSocket(port, 30000, 30000, sslSocketFactory);
-    socket->setKeepAlive(false);
-
     // server transport setup
-    std::shared_ptr<TServerTransport> transport(socket);
+    std::shared_ptr<TServerTransport> transport(new TSSLServerSocket(port, 30000, 30000, sslSocketFactory));
 
-    // create server
-    ctx->server = std::make_shared<TThreadPoolServer>(processor, transport, transportFactory, protocolFactory, ctx->getManager());
+    // create server and runner
+    this->server = std::make_shared<TThreadPoolServer>(processor, transport, transportFactory, protocolFactory, this->getManager());
+    std::shared_ptr<Runnable> runner(this->server);
 
-    // listen for incoming messages
-    ctx->server->serve();
+    // detached thread factory
+    ThreadFactory factory(false);
 
-    return NULL;
-}
-
-void PersonNetworker::startServer(int port) {
-    this->thread = std::make_shared<std::thread>(
-        std::bind(&PersonNetworker::serverStarter, this, port)
-    );
+    // create and start server thread
+    this->thread = factory.newThread(runner);
+    this->thread->start();
 }
 
 int32_t PersonNetworker::balance(const std::string& ownerId) {
