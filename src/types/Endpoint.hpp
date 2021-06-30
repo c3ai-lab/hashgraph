@@ -57,9 +57,17 @@ class Endpoint {
         void exchangeGossipData(const message::GossipPacket packet, const std::string sigDer);
 
         /**
+         * Get bootstrap data from remote node
+         * 
+         * @param _return
+         * @param identifier
+         */
+        void bootstrap(message::BootstrapPacket &_return, const std::string &identifier);
+
+        /**
          * Return the nodes' identifier
          */
-        std::string getIdentifier() const;
+        std::string getIdentifier() const;   
 };
 
 };

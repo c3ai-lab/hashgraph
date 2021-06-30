@@ -6,18 +6,17 @@
 namespace hashgraph {
 namespace protocol {
 
-Event::Event(Person &p, message::GossipData const &data) : 
-    graph(const_cast<std::vector<Event *>&>(p.getHashgraph())),
+Event::Event(Person &p, message::GossipData const &data, int round, bool witness) : 
+    graph(const_cast<std::vector<Event*>&>(p.getHashgraph())),
     d(data),
     selfParent(NULL), 
     gossiperParent(NULL), 
     consensusTimestamp(-1), 
     roundRecieved(-1),
-    round(0), 
-    witness(d.selfHash == "\0" ? true : false), 
-    famous(-1) {
-
-    hash = makeHash();
+    round(round), 
+    witness((witness || (d.selfHash == "\0")) ? true : false), 
+    famous(-1),
+    hash(makeHash()) {
 }
 
 Event::~Event() {
@@ -37,7 +36,7 @@ void Event::divideRounds(Person &person) {
     }
 
     this->round = this->selfParent->getRound();
-    if (this->gossiperParent->getRound() > round)
+    if (this->gossiperParent->getRound() > this->round)
         this->round = this->gossiperParent->getRound();
 
     std::size_t numStrongSee = 0;
@@ -69,7 +68,7 @@ void Event::decideFame(Person &person) {
         return ;
 
     for (std::size_t x = this->graph.size() - 1; x < this->graph.size(); x--) {
-        if (this->graph[x]->getWitness() && this->graph[x]->getFamous() == -1 && this->graph[x]->getRound() <= round - 2) {
+        if (this->graph[x]->getWitness() && this->graph[x]->getFamous() == -1 && this->graph[x]->getRound() <= this->round - 2) {
             s = person.findWitnesses(this->graph[x]->getRound() + 1);
             count = 0;
             countNo = 0;
@@ -182,19 +181,18 @@ bool Event::ancestor(Event const &y) {
 
 bool Event::stronglySee(Event const &y, std::vector<types::Endpoint*> *endpoints) {
 
-    std::size_t numSee = 0;
-
     std::unordered_map<std::string, bool> found;
     for (std::vector<types::Endpoint*>::iterator it = endpoints->begin(); it != endpoints->end(); ++it) {
         found[(*it)->getIdentifier()] = false;
     }
 
-    for (std::size_t n = 0; n < graph.size(); n++) {
-        if (found[graph[n]->getData().owner] == true || graph[n]->getRound() < y.getRound())
-            continue ;
-        if (this->see(*(graph[n])) && graph[n]->see(y)) {
+    std::size_t numSee = 0;
+    for (std::size_t n = 0; n < this->graph.size(); n++) {
+        if (found[this->graph[n]->getData().owner] == true || this->graph[n]->getRound() < y.getRound())
+            continue;
+        if (this->see(*(this->graph[n])) && this->graph[n]->see(y)) {
             numSee++;
-            found[graph[n]->getData().owner] = true;
+            found[this->graph[n]->getData().owner] = true;
             if (numSee > 2 * endpoints->size() / 3) {
                 return true;
             }

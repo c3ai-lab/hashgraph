@@ -16,14 +16,16 @@ void PersonApplication::setEventLogging(bool logEvents) {
     this->logEvents = logEvents;
 }
 
-void PersonApplication::storeTransferData(const protocol::Event *event) {
+void PersonApplication::storeTransferData(int64_t cnsTime, const message::GossipData data) {
+    if (!data.__isset.payload) return;
+
     this->getManager()->add(std::make_shared<runner::SQLiteTransferRunner>(
         this->getDatabasePath(),
-        event->getData().payload.receiverId,
-        event->getData().payload.senderPkDer,
-        event->getData().payload.sigDer,
-        event->getData().payload.amount, 
-        event->getConsensusTimestamp()
+        data.payload.receiverId,
+        data.payload.senderPkDer,
+        data.payload.sigDer,
+        data.payload.amount, 
+        cnsTime
     ));
 }
 

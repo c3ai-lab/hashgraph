@@ -62,7 +62,7 @@ void PersonNetworker::startServer(int port) {
     this->thread->start();
 }
 
-int32_t PersonNetworker::balance(const std::string& ownerId) {
+int32_t PersonNetworker::balance(const std::string &ownerId) {
     std::vector<message::BalanceTransfer> history;
     utils::getTransferHistory(this->getDatabasePath(), ownerId, history);
 
@@ -79,11 +79,11 @@ int32_t PersonNetworker::balance(const std::string& ownerId) {
     return amount;
 }
 
-void PersonNetworker::balance_history(std::vector<message::BalanceTransfer> & _return, const std::string& ownerId) {
+void PersonNetworker::balance_history(std::vector<message::BalanceTransfer> &_return, const std::string &ownerId) {
     utils::getTransferHistory(this->getDatabasePath(), ownerId, _return);
 }
 
-void PersonNetworker::challenge(std::string& _return) {
+void PersonNetworker::challenge(std::string &_return) {
     _return.assign("dummy");
 }
 

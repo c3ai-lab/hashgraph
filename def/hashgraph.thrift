@@ -42,6 +42,10 @@ struct GossipPacket {
     2:list<GossipData> data;
 }
 
+struct BootstrapPacket {
+    1:optional GossipData data;
+}
+
 ///////////////////////////////////////////////////////////
 // Hashgraph service definition
 ///////////////////////////////////////////////////////////
@@ -62,4 +66,7 @@ service Hashgraph {
 
     // return a challenge to be used within a transfer
     binary challenge()
+
+    // bootstrap remote node
+    BootstrapPacket bootstrap(1:string identifier)
 }

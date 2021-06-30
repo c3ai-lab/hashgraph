@@ -32,9 +32,10 @@ class PersonApplication : virtual public SuperPerson {
         /**
          * Store the transfer data
          * 
-         * @param event The event that contains the transfer
+         * @param cnsTime The consensus time of the enclosing event
+         * @param data Data of the gossip event
          */
-        void storeTransferData(const protocol::Event *event);
+        void storeTransferData(int64_t cnsTime, const message::GossipData data);
 
         /**
          * Log a committed event

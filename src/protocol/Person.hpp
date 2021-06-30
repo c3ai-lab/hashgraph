@@ -181,6 +181,14 @@ class Person : public PersonNetworker, public PersonApplication {
          * @param sigDer
          */
         void crypto_transfer(const std::string &ownerPkDer, const int32_t amount, const std::string &receiverId, const std::string &challenge, const std::string &sigDer);
+
+        /**
+         * Bootstrap a remote node
+         * 
+         * @param _return
+         * @param identifier
+         */
+        void bootstrap(message::BootstrapPacket &_return, const std::string &identifier);
 };
 
 };

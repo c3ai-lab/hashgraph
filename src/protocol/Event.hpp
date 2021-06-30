@@ -20,20 +20,75 @@ class Event {
 
     private:
 
+        /**
+         * Hashgraph reference
+         */
         std::vector<Event*> &graph;
+
+        /**
+         * Ancestors seen
+         */
         std::unordered_set<std::string> ancestorsSeen;
+
+        /**
+         * Ancestors not seen
+         */
         std::unordered_set<std::string> ancestorsNotSeen;
+
+        /**
+         * Hashes seen
+         */
         std::unordered_set<std::string> hashesSeen;
+
+        /**
+         * Hashes not seen
+         */
         std::unordered_set<std::string> hashesNotSeen;
-        std::string hash;
+
+        /**
+         * Gossip data
+         */
         message::GossipData d;
+
+        /**
+         * Parent event
+         */
         Event *selfParent;
+
+        /**
+         * Gossip event
+         */
         Event *gossiperParent;
+
+        /**
+         * Event consensus timestamp
+         */
         int64_t consensusTimestamp;
+
+        /**
+         * Round when the event was received
+         */
         int roundRecieved;
+
+        /**
+         * Event round
+         */
         int round;
+
+        /**
+         * Flag that indicates whether this event is a witness
+         */
         bool witness;
+
+        /**
+         * Flag that indicates whether this event is famous
+         */
         char famous;
+
+        /**
+         * Event hash
+         */
+        std::string hash;
 
         /**
          * Hash this event
@@ -45,7 +100,7 @@ class Event {
         /**
          * Constructor
          */
-        Event(Person &p, message::GossipData const &data);
+        Event(Person &p, message::GossipData const &data, int round = 0, bool witness = false);
 
         /**
          * Destructor

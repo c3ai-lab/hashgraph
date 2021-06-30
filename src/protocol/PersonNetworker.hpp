@@ -4,7 +4,6 @@
 #include <string>
 #include <cstdint>
 #include <thrift/concurrency/Thread.h>
-#include <thrift/concurrency/Monitor.h>
 #include <thrift/server/TThreadPoolServer.h>
 #include "SuperPerson.hpp"
 #include "../types/Endpoint.hpp"
@@ -72,14 +71,14 @@ class PersonNetworker : virtual public SuperPerson, virtual public message::Hash
          * 
          * @param _return
          */
-        void challenge(std::string& _return);
+        void challenge(std::string &_return);
 
         /**
          * Returns the user balance
          * 
          * @param ownerId
          */
-        int32_t balance(const std::string& ownerId);
+        int32_t balance(const std::string &ownerId);
 
         /**
          * Returns the user balance history
@@ -87,7 +86,7 @@ class PersonNetworker : virtual public SuperPerson, virtual public message::Hash
          * @param _return
          * @param ownerId
          */
-        void balance_history(std::vector<message::BalanceTransfer> & _return, const std::string& ownerId);
+        void balance_history(std::vector<message::BalanceTransfer> &_return, const std::string &ownerId);
 
         /**
          * Receives a gossip from another node
@@ -107,6 +106,14 @@ class PersonNetworker : virtual public SuperPerson, virtual public message::Hash
          * @param sigDer
          */
         virtual void crypto_transfer(const std::string &ownerPkDer, const int32_t amount, const std::string &receiverId, const std::string &challenge, const std::string &sigDer) = 0;
+
+        /**
+         * Bootstrap a remote node
+         * 
+         * @param _return
+         * @param identifier
+         */
+        virtual void bootstrap(message::BootstrapPacket &_return, const std::string &identifier) = 0;
 };
 
 };

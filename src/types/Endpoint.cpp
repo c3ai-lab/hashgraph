@@ -68,6 +68,24 @@ void Endpoint::exchangeGossipData(const message::GossipPacket packet, const std:
     }
 }
 
+void Endpoint::bootstrap(message::BootstrapPacket &_return, const std::string &identifier) {
+    std::lock_guard<std::mutex> guard(this->gspMutex);
+
+    try {
+        // connect to remote server
+        if (!this->client->getInputProtocol()->getTransport()->isOpen()) {
+            this->client->getInputProtocol()->getTransport()->open();
+        }
+        // send gossip data
+        this->client->bootstrap(_return, identifier);
+        // close connection
+        this->client->getInputProtocol()->getTransport()->close();
+    }
+    catch (TException& tx) {
+        fprintf(stderr, "%s\n", tx.what());
+    }
+}
+
 std::string Endpoint::getIdentifier() const {
     return this->identifier;
 }
