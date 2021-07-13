@@ -170,6 +170,16 @@ bool verifyGossipPayload(const std::string ownerPkDer, const int32_t amount, con
  */
 bool verifyGossipPacket(const std::vector<types::Endpoint*> *endpoints, const message::GossipPacket packet, const std::string sigDer);
 
+/**
+ * Return transactions from a node for a specific time frame
+ *
+ * @param databasePath
+ * @param fromUnix
+ * @param toUnix
+ */
+void getTransactions(const std::string databasePath, int64_t fromUnix, int64_t toUnix, std::vector<message::BalanceTransfer> &history);
+
+
 };
 };
 #endif

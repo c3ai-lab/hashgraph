@@ -87,5 +87,11 @@ void PersonNetworker::challenge(std::string &_return) {
     _return.assign("dummy");
 }
 
+void PersonNetworker::get_transaction(std::vector<message::BalanceTransfer> &_return, const int64_t fromUnix, const int64_t toUnix) {
+    printf("test1");
+    fflush(stdout);
+    utils::getTransactions(this->getDatabasePath(), fromUnix, toUnix, _return);
+}
+
 };
 };

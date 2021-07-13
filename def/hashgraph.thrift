@@ -47,6 +47,24 @@ struct BootstrapPacket {
 }
 
 ///////////////////////////////////////////////////////////
+// Data to be exchanged through node syncing
+///////////////////////////////////////////////////////////
+/*
+struct TransactionData {
+    1:i32       id;
+    2:string    sId;
+    3:string    rId;
+    4:binary    sigDer;
+    5:i32       amount;
+    6:i64       timestamp;
+}
+
+struct TransactionPacket {
+    1:string                node;
+    2:list<TansactionData>  data;
+}*/
+
+///////////////////////////////////////////////////////////
 // Hashgraph service definition
 ///////////////////////////////////////////////////////////
 
@@ -69,4 +87,7 @@ service Hashgraph {
 
     // bootstrap remote node
     BootstrapPacket bootstrap(1:string identifier)
+
+    // return transactions for a specific time window to allow a database sync between nodes
+    list<BalanceTransfer> get_transaction(1:i64 fromUnix, 2: i64 toUnix)
 }

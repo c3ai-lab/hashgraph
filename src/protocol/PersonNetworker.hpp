@@ -114,6 +114,15 @@ class PersonNetworker : virtual public SuperPerson, virtual public message::Hash
          * @param identifier
          */
         virtual void bootstrap(message::BootstrapPacket &_return, const std::string &identifier) = 0;
+
+        /**
+         * Returns the nodes transaction history for a specific time frame
+         * 
+         * @param _return
+         * @param fromUnix
+         * @param toUnix
+         */
+        void get_transaction(std::vector<message::BalanceTransfer> &_return, const int64_t fromUnix, const int64_t toUnix);
 };
 
 };

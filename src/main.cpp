@@ -31,6 +31,8 @@ int main(int argc, char** argv) {
         quit.store(true);
     });
 
+    printf("Starting...");
+    fflush(stdout);
     // read node configuration file
     YAML::Node config = YAML::LoadFile(argv[1]);
 
@@ -53,7 +55,26 @@ int main(int argc, char** argv) {
     );
 
     // initialize database
+    printf("test0");
+    fflush(stdout);
     person.initDatabase(config["databasePath"].as<std::string>());
+
+    std::vector<hashgraph::message::BalanceTransfer> transactions;
+    person.get_transaction(transactions, 1623190865829, 1623202949011);
+
+    //person.balance_history(transactions, "11xa202effc3bb275689552d1ad1b0264c68dd036d4");
+    printf("test2");
+    fflush(stdout);
+
+    //printf("Result %d", transactions);
+
+    /*for (auto eit = transactions.begin(); eit != transactions.end(); ++eit){
+        printf("Transaction sender %s", (*eit).senderId.c_str());
+        fflush(stdout);
+    }*/
+
+    return EXIT_SUCCESS;
+
     // enable/disable event logging
     person.setEventLogging(config["logEvents"].as<bool>());
     // start server process

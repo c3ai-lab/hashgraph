@@ -257,5 +257,79 @@ void writeToLog(const std::string databasePath, const std::string owner, int rou
     }
 }
 
+void getTransactions(const std::string databasePath, int64_t fromUnix, int64_t toUnix, std::vector<message::BalanceTransfer> &history) {
+    printf("test3");
+    fflush(stdout);
+
+    sqlite3 *db;
+    sqlite3_stmt* stmt;
+    int rc;
+
+    // open database
+    if (sqlite3_open_v2(databasePath.c_str(), &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+        return;
+    }
+
+    // enable WAL mode
+    sqlite3_exec(db, "PRAGMA journal_mode=WAL;", NULL, NULL, NULL);
+    // set query timeout
+    sqlite3_exec(db, "PRAGMA busy_timeout = 30000;", NULL, NULL, NULL);
+
+    // build transaction list
+    printf("test4");
+    fflush(stdout);
+    if (sqlite3_prepare_v2(db, 
+        "SELECT * FROM Transfer AS t "
+        "WHERE t.timestamp BETWEEN ? AND ?;", -1, &stmt, 0) != SQLITE_OK) {
+        printf("SQL error: %s \n", sqlite3_errmsg(db));
+    }
+
+    printf("test5");
+    fflush(stdout);
+
+    sqlite3_bind_int64(stmt, 1, fromUnix);
+    sqlite3_bind_int64(stmt, 2, toUnix);
+    //SQL Injection?
+    printf("\n test6");
+
+
+    do {
+        rc = sqlite3_step(stmt);
+        switch (rc) {
+            /** No more data */
+            case SQLITE_DONE:
+            break;
+            /** New data */
+            case SQLITE_ROW: {
+            
+                /*message::BalanceTransfer bt;
+                bt.senderId = sqlite3_column_int(stmt, 1);
+                bt.receiverId = sqlite3_column_int(stmt, 2);
+                //bt.pkDer.assign((char*)sqlite3_column_blob(stmt, 2), sqlite3_column_bytes(stmt, 2));
+                bt.sigDer.assign((char*)sqlite3_column_blob(stmt, 2), sqlite3_column_bytes(stmt, 3));
+                bt.amount = sqlite3_column_int(stmt, 4);
+                bt.timestamp = sqlite3_column_int64(stmt, 5);
+                history.push_back(bt);*/
+
+                printf("moin");
+                fflush(stdout);
+            }
+            break;
+            default: break;
+        }
+    } 
+    while (rc == SQLITE_ROW);
+
+    if (sqlite3_finalize(stmt) != SQLITE_OK) {
+        printf("SQL error: %s \n", sqlite3_errmsg(db));
+    }
+
+    // close database
+    if (sqlite3_close(db) != SQLITE_OK) {
+        fprintf(stderr, "Can't close database\n");
+    }
+}
+
 };
 };
