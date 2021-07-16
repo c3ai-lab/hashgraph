@@ -9,6 +9,8 @@
 #include "types/Endpoint.hpp"
 #include "protocol/Person.hpp"
 
+#include <iostream>
+
 #ifndef DEBUG
 #define DEBUG 0
 #endif
@@ -16,6 +18,8 @@
 std::atomic<bool> quit;
 
 int main(int argc, char** argv) {
+
+    quit = true; // initially stops the gossipping and ends the application normally
 
     if (argc <= 1) {
         std::cout << "Invalid number of arguments. Usage: ./hashgraph \"/path/to/tests/config/node0/settings.yaml\"" << std::endl;
@@ -54,26 +58,27 @@ int main(int argc, char** argv) {
         &endpoints
     );
 
+
     // initialize database
-    printf("test0");
-    fflush(stdout);
     person.initDatabase(config["databasePath"].as<std::string>());
 
+
+    // test
     std::vector<hashgraph::message::BalanceTransfer> transactions;
-    person.get_transaction(transactions, 1623190865829, 1623202949011);
+    person.get_transaction(transactions, 0, 9623202949011);
 
-    //person.balance_history(transactions, "11xa202effc3bb275689552d1ad1b0264c68dd036d4");
-    printf("test2");
-    fflush(stdout);
+    for (size_t i=0; i<transactions.size(); i++) {
+        // c++ method of printing text
+        // requires #include <iostream>
 
-    //printf("Result %d", transactions);
+        std::cout << "sID: "       << transactions.at(i).senderId   << std::endl;
+        std::cout << "rID: "       << transactions.at(i).receiverId << std::endl;
+        //std::cout << "sigDer: "    << transactions.at(i).sigDer     << std::endl;
+        std::cout << "Amount: "    << transactions.at(i).amount     << std::endl;
+        std::cout << "Timestamp: " << transactions.at(i).timestamp  << std::endl;
 
-    /*for (auto eit = transactions.begin(); eit != transactions.end(); ++eit){
-        printf("Transaction sender %s", (*eit).senderId.c_str());
-        fflush(stdout);
-    }*/
-
-    return EXIT_SUCCESS;
+        std::cout << std::endl; // endl = newline
+    }
 
     // enable/disable event logging
     person.setEventLogging(config["logEvents"].as<bool>());
